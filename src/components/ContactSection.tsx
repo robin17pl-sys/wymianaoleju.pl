@@ -19,9 +19,18 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ settings }) => {
     e.preventDefault();
     if (!formData.name || !formData.phone) return;
     setFormSent(true);
-    setTimeout(() => {
-      // Keep form feedback visible
-    }, 4000);
+    
+    // Mailto dispatch directed to dreamstudiopl@gmail.com
+    try {
+      const subject = encodeURIComponent(`[ZMIANAOLEJU.pl] Zapytanie techniczne: ${formData.name} (${formData.phone})`);
+      const body = encodeURIComponent(
+        `Imię: ${formData.name}\nNumer telefonu: ${formData.phone}\nAdres e-mail: ${formData.email || 'Nie podano'}\n\nTreść zapytania / dane auta:\n${formData.message || 'Prośba o szybki kontakt i konsultację techniczną.'}`
+      );
+      const mailtoUrl = `mailto:dreamstudiopl@gmail.com?subject=${subject}&body=${body}`;
+      window.location.href = mailtoUrl;
+    } catch {
+      // safe fallback
+    }
   };
 
   const fullAddress = `${settings.addressStreet}, ${settings.addressPostalCode} ${settings.addressCity}`;
@@ -112,10 +121,10 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ settings }) => {
                     Adres e-mail
                   </div>
                   <a
-                    href={`mailto:${settings.email}`}
-                    className="font-bold text-sm text-white hover:text-amber-400 transition-colors mt-1 block"
+                    href="mailto:dreamstudiopl@gmail.com"
+                    className="font-bold text-sm text-amber-400 hover:text-amber-300 transition-colors mt-1 block"
                   >
-                    {settings.email}
+                    dreamstudiopl@gmail.com
                   </a>
                 </div>
               </div>
@@ -154,13 +163,18 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ settings }) => {
                 Masz nietypowe auto lub pytanie?
               </h3>
               <p className="text-xs text-slate-400 mb-4">
-                Napisz do naszego głównego technika – odpowiadamy w ciągu kilkunastu minut.
+                Napisz do naszego zespołu technicznego (dreamstudiopl@gmail.com) – odpowiadamy w ciągu kilkunastu minut.
               </p>
 
               {formSent ? (
-                <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 shrink-0" />
-                  <span>Dziękujemy! Wiadomość została przesłana. Skontaktujemy się telefonicznie.</span>
+                <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs space-y-1.5">
+                  <div className="flex items-center gap-2 font-semibold">
+                    <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
+                    <span>Dziękujemy! Wiadomość skierowana na adres dreamstudiopl@gmail.com</span>
+                  </div>
+                  <p className="text-[11px] text-slate-400 pl-6">
+                    Nasz doradca skontaktuje się z Tobą telefonicznie lub mailowo najszybciej jak to możliwe.
+                  </p>
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-3">
@@ -261,6 +275,12 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ settings }) => {
               </div>
 
             </div>
+
+            {/* Disclaimer under map as requested */}
+            <p className="mt-3 text-xs text-slate-400 italic text-center sm:text-left flex items-start gap-1.5 px-1">
+              <span className="text-amber-400 font-bold text-sm leading-none shrink-0">*</span>
+              <span>Wymiana oleju do 27 min nie obejmuje płukania silnika i zastosowania Metal Guard.</span>
+            </p>
           </div>
 
         </div>

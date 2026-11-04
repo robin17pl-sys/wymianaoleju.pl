@@ -202,7 +202,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
               {/* Robocizna podstawowa */}
               <div className="p-5 rounded-2xl bg-slate-950 border border-slate-800">
                 <h4 className="font-heading text-sm font-bold uppercase tracking-wider text-amber-400 mb-1">
-                  1. Robocizna Podstawowa (Wymiana oleju i filtra w 27 min)
+                  1. Robocizna Podstawowa (Wymiana oleju i filtra do 27 min)
                 </h4>
                 <p className="text-xs text-slate-400 mb-4">
                   Cena za usługę ekspresowej wymiany, kontrolę szczelności podnośnikiem i dokręcenie kluczem Nm.

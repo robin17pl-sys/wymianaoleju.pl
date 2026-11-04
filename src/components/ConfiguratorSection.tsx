@@ -235,7 +235,7 @@ export const ConfiguratorSection: React.FC<ConfiguratorSectionProps> = ({ prices
       selectedOilBrand: selectedBrand,
       selectedFilterBrand: effectiveFilterBrand,
       oilProductName: selectedBrand === 'Własny olej i filtr' 
-        ? 'Własny olej i filtr klienta (usługa samej wymiany w 27 min)' 
+        ? 'Własny olej i filtr klienta (usługa samej wymiany do 27 min*)' 
         : `Dedykowany ${selectedBrand} wg katalogu + filtr ${effectiveFilterBrand}`,
       oilQuantityLiters: selectedBrand === 'Własny olej i filtr' ? 0 : 4.5,
       includeEngineFlush: includeFlush,
@@ -249,6 +249,29 @@ export const ConfiguratorSection: React.FC<ConfiguratorSectionProps> = ({ prices
     store.bookings.unshift(newBooking);
     saveAdminStore(store);
 
+    // Prepare dispatch directed to dreamstudiopl@gmail.com
+    try {
+      const emailSubject = encodeURIComponent(`[ZMIANAOLEJU.pl] Zapytanie ${refNum}: ${vehicleMake.trim()} ${vehicleModel.trim()}`);
+      const emailBody = encodeURIComponent(
+        `Nowe zapytanie z konfiguratora ZMIANAOLEJU.pl:\n\n` +
+        `Nr ref: ${refNum}\n` +
+        `Klient: ${clientName.trim()}\n` +
+        `Telefon: ${phone.trim()}\n` +
+        `E-mail: ${email.trim()}\n` +
+        `Auto: ${vehicleMake.trim()} ${vehicleModel.trim()} (${vehicleYear.trim()}) - ${vehicleEngine.trim()} [${fuelType}]\n` +
+        `Olej: ${selectedBrand}\n` +
+        `Filtr: ${effectiveFilterBrand}\n` +
+        `Płukanie silnika: ${includeFlush ? 'TAK' : 'NIE'}\n` +
+        `Metal Guard: ${includeMetalGuard ? 'TAK' : 'NIE'}\n` +
+        `Uwagi: ${notes.trim() || 'Brak'}`
+      );
+      const mailtoLink = `mailto:dreamstudiopl@gmail.com?subject=${emailSubject}&body=${emailBody}`;
+      // We can trigger mail client or retain copy
+      window.location.href = mailtoLink;
+    } catch {
+      // safe fallback
+    }
+
     setTimeout(() => {
       setIsSubmitting(false);
       setSubmittedInquiry({
@@ -260,7 +283,7 @@ export const ConfiguratorSection: React.FC<ConfiguratorSectionProps> = ({ prices
         brand: selectedBrand,
         filterBrand: effectiveFilterBrand
       });
-    }, 700);
+    }, 600);
   };
 
   return (
@@ -318,9 +341,13 @@ export const ConfiguratorSection: React.FC<ConfiguratorSectionProps> = ({ prices
                 <span className="text-slate-500">Materiały / Dobór:</span>
                 <div className="font-bold text-amber-400 mt-0.5">
                   {submittedInquiry.brand === 'Własny olej i filtr' 
-                    ? 'Własny olej i filtr klienta (usługa samej wymiany)' 
+                    ? 'Własny olej i filtr klienta (usługa samej wymiany do 27 min*)' 
                     : `Olej: ${submittedInquiry.brand} · Filtr: ${submittedInquiry.filterBrand}`}
                 </div>
+              </div>
+              <div className="flex justify-between pt-1 border-t border-slate-800/60">
+                <span className="text-slate-500">Kopia powiadomienia:</span>
+                <span className="text-slate-300 font-mono text-[11px]">dreamstudiopl@gmail.com</span>
               </div>
               <div>
                 <span className="text-slate-500">Czas odpowiedzi:</span>
@@ -918,7 +945,7 @@ export const ConfiguratorSection: React.FC<ConfiguratorSectionProps> = ({ prices
                           </span>
                         </div>
                         <p className="text-xs text-slate-300 mt-1 leading-relaxed">
-                          Przywieź ze sobą zakupiony olej oraz filtr. W ramach usługi wykonujemy ekspresową wymianę w 27 minut, montujemy nową podkładkę korka i bezpiecznie utylizujemy przepracowany olej.
+                          Przywieź ze sobą zakupiony olej oraz filtr. W ramach usługi wykonujemy ekspresową wymianę do 27 minut*, montujemy nową podkładkę korka i darmowo utylizujemy zużyty olej.
                         </p>
                       </div>
                     </div>

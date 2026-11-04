@@ -70,7 +70,7 @@ export const Footer: React.FC<FooterProps> = ({ settings, onOpenAdmin }) => {
               </li>
               <li>
                 <a href="#dlaczego-my" className="hover:text-amber-400 transition-colors">
-                  Dlaczego my (27 min)
+                  Dlaczego my (do 27 min)
                 </a>
               </li>
               <li>

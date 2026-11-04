@@ -11,9 +11,9 @@ export const WhyUsSection: React.FC = () => {
     },
     {
       icon: Clock,
-      title: 'Ekspresowa obsługa w 27 minut',
-      description: 'Koniec z zostawianiem samochodu w warsztacie od rana do wieczora. Wjeżdżasz o umówionej godzinie, a po około 27 minutach wyjeżdżasz z nowym olejem, zresetowaną inspekcją i wpisem do książki.',
-      highlight: 'Nawet 27 minut'
+      title: 'Ekspresowa obsługa do 27 minut*',
+      description: 'Koniec z zostawianiem samochodu w warsztacie od rana do wieczora. Wjeżdżasz o umówionej godzinie, a do 27 minut wyjeżdżasz z nowym olejem, zresetowaną inspekcją i wpisem do książki.*',
+      highlight: 'Do 27 minut*'
     },
     {
       icon: ShieldCheck,

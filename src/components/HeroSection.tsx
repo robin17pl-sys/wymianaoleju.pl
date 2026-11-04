@@ -48,7 +48,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ settings, onScrollToCo
               </p>
               <div className="mt-2 text-xs text-slate-400 flex items-center gap-2">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                <span>Wymiana oleju i filtra z inspekcją szczelności nawet w {settings.expressTimeMinutes} minut</span>
+                <span>Wymiana oleju i filtra z inspekcją szczelności do {settings.expressTimeMinutes} minut*</span>
               </div>
             </div>
 
@@ -72,7 +72,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ settings, onScrollToCo
 
             {/* Unboxed metadata trust markers */}
             <div className="mt-8 flex flex-wrap items-center gap-3 text-xs text-slate-400 pt-6 border-t border-slate-800/60">
-              <span className="font-semibold text-slate-300">Czas operacyjny: do 27 min</span>
+              <span className="font-semibold text-slate-300">Czas operacyjny: do 27 min*</span>
               <span aria-hidden="true" className="text-slate-600">·</span>
               <span>100% zgodności z aprobatami producentów</span>
               <span aria-hidden="true" className="text-slate-600">·</span>
@@ -85,8 +85,8 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ settings, onScrollToCo
           <div className="lg:col-span-5 flex flex-col justify-center">
             <div className="relative rounded-2xl overflow-hidden border border-slate-800/80 bg-slate-900 shadow-2xl group">
               <img
-                src="/src/assets/images/hero_oil_service_bay_1793544073929.jpg"
-                alt="Nowoczesne stanowisko ekspresowej wymiany oleju silnikowego ZMIANAOLEJU.pl"
+                src="/src/assets/images/skoda_lift_sw_plate_1793804390969.jpg"
+                alt="Wymiana oleju na podnośniku – Skoda na śląskich tablicach rejestracyjnych SW w serwisie ZMIANAOLEJU.pl"
                 referrerPolicy="no-referrer"
                 className="w-full h-[380px] sm:h-[440px] lg:h-[480px] object-cover transition-transform duration-700 group-hover:scale-105"
               />
@@ -101,8 +101,8 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ settings, onScrollToCo
                   <div className="text-sm font-bold text-white mt-0.5">Stanowisko ekspresowe & klucz dynamometryczny</div>
                 </div>
                 <div className="text-right">
-                  <div className="font-heading font-black text-2xl text-amber-400 tabular-nums">27 min</div>
-                  <div className="text-[11px] text-slate-400">średni czas</div>
+                  <div className="font-heading font-black text-2xl text-amber-400 tabular-nums">do 27 min*</div>
+                  <div className="text-[11px] text-slate-400">czas operacyjny</div>
                 </div>
               </div>
             </div>
@@ -119,7 +119,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ settings, onScrollToCo
                 <Clock className="w-5 h-5" />
               </div>
               <div>
-                <div className="font-heading font-black text-2xl text-white tabular-nums">27 minut</div>
+                <div className="font-heading font-black text-2xl text-white tabular-nums">do 27 min*</div>
                 <div className="text-xs text-slate-400 mt-0.5">Ekspresowa wymiana na poczekaniu</div>
               </div>
             </div>

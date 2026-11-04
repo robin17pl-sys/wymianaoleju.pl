@@ -91,7 +91,7 @@ export const Navbar: React.FC<NavbarProps> = ({ settings, onOpenBooking, onOpenA
               onClick={onOpenBooking}
               className="px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-black bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 rounded-lg shadow-lg shadow-amber-500/20 transition-all hover:scale-[1.02] active:scale-[0.98] whitespace-nowrap shrink-0"
             >
-              Umów wizytę w 27 min
+              Umów wizytę do 27 min
             </button>
 
             {/* Mobile menu button */}

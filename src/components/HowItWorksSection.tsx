@@ -28,7 +28,7 @@ export const HowItWorksSection: React.FC<HowItWorksSectionProps> = ({ onScrollTo
     {
       step: '04',
       title: 'Przyjeżdżasz na wymianę',
-      description: 'Umawiasz wizytę online na konkretną godzinę. Wymiana trwa zaledwie 27 minut – pijesz pyszną kawę i ruszasz w dalszą trasę.',
+      description: 'Umawiasz wizytę online na konkretną godzinę. Wymiana trwa do 27 minut* – pijesz pyszną kawę i ruszasz w dalszą trasę.',
       icon: Clock
     }
   ];

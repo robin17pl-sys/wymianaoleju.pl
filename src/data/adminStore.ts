@@ -100,7 +100,7 @@ export const DEFAULT_SETTINGS: WorkshopSettings = {
   addressCity: 'Świętochłowice',
   addressPostalCode: '41-608',
   phone: '+48 500 184 999',
-  email: 'kontakt@zmianaoleju.pl',
+  email: 'dreamstudiopl@gmail.com',
   googleMapsEmbedUrl: 'https://maps.google.com/maps?q=%C5%9Awi%C4%99toch%C5%82owice%2C%20G%C3%B3rna%207%2C%2041-608&t=&z=16&ie=UTF8&iwloc=&output=embed',
   workingHoursWeekday: 'Poniedziałek – Piątek: 07:30 – 19:00',
   workingHoursSaturday: 'Sobota: 08:00 – 15:00',
@@ -169,7 +169,12 @@ export function getAdminStore(): AdminStoreData {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(initial));
       return initial;
     }
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    if (parsed?.settings) {
+      parsed.settings.email = 'dreamstudiopl@gmail.com';
+      parsed.settings.phone = '+48 500 184 999';
+    }
+    return parsed;
   } catch {
     return {
       prices: DEFAULT_PRICES,

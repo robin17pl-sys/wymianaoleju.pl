@@ -1,6 +1,6 @@
 {
   "name": "OILEXX – Specjalistyczny Serwis Wymiany Oleju",
-  "description": "Wyspecjalizowany punkt szybkiej wymiany oleju silnikowego i filtrów w 27 minut. Oleje Motul, Liqui Moly, Valvoline z doborem według norm producenta.",
+  "description": "Wyspecjalizowany punkt szybkiej wymiany oleju silnikowego i filtrów do 27 minut. Oleje Motul, Liqui Moly, Valvoline z doborem według norm producenta.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

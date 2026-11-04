@@ -209,7 +209,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                 {confirmedBooking ? 'Potwierdzenie Rezerwacji' : 'Rezerwacja Stanowiska Ekspresowego'}
               </h3>
               <p className="text-xs text-slate-400">
-                {confirmedBooking ? 'Wizyta została pomyślnie zarejestrowana w systemie' : 'Czas wykonania: ok. 27 minut'}
+                {confirmedBooking ? 'Wizyta została pomyślnie zarejestrowana w systemie' : 'Czas wykonania: do 27 minut*'}
               </p>
             </div>
           </div>
@@ -366,7 +366,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
               {/* Step B: Pick Time Slot */}
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-2.5">
-                  2. Wybierz godzinę (interwał 30 min / wymiana w 27 min):
+                  2. Wybierz godzinę (interwał 30 min / wymiana do 27 min*):
                 </label>
                 <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
                   {timeSlots.map((time) => (
