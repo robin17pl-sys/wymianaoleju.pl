@@ -3,7 +3,7 @@ import { WorkshopSettings } from '../data/adminStore';
 
 interface FooterProps {
   settings: WorkshopSettings;
-  onOpenAdmin: () => void;
+  onOpenAdmin?: () => void;
 }
 
 export const Footer: React.FC<FooterProps> = ({ settings, onOpenAdmin }) => {
@@ -112,23 +112,18 @@ export const Footer: React.FC<FooterProps> = ({ settings, onOpenAdmin }) => {
             </ul>
           </div>
 
-          {/* Kontakt & Właściciel */}
+          {/* Kontakt & Lokalizacja */}
           <div>
             <div className="text-xs font-bold uppercase tracking-wider text-slate-200 mb-3">
-              Serwis i Panel
+              Serwis i Kontakt
             </div>
             <div className="space-y-2 text-xs">
               <div>{settings.addressStreet}</div>
               <div>{settings.addressPostalCode} {settings.addressCity}</div>
               <div className="text-amber-400 font-mono font-bold mt-1">{settings.phone}</div>
               <div className="text-slate-400">{settings.email}</div>
-              <div className="pt-3">
-                <button
-                  onClick={onOpenAdmin}
-                  className="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-amber-400 hover:text-white hover:bg-slate-800 transition-colors text-[11px] font-semibold inline-flex items-center gap-1.5"
-                >
-                  <span>Panel Administracyjny Właściciela</span>
-                </button>
+              <div className="pt-2 text-[11px] text-slate-500">
+                Pn–Pt: {settings.workingHoursWeekday}
               </div>
             </div>
           </div>

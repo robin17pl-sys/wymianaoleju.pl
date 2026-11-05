@@ -13,7 +13,12 @@ import {
   Search,
   Filter,
   Car,
-  Droplet
+  Droplet,
+  Lock,
+  Eye,
+  EyeOff,
+  LogOut,
+  ArrowLeft
 } from 'lucide-react';
 import { 
   AdminStoreData, 
@@ -38,6 +43,34 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
   onDataUpdated
 }) => {
   if (!isOpen) return null;
+
+  // Authentication State for CMS Access
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    return sessionStorage.getItem('zmianaoleju_cms_auth') === 'true';
+  });
+  const [loginUsername, setLoginUsername] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [loginError, setLoginError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (loginUsername.trim().toLowerCase() === 'lukasz' && loginPassword === 'QWEasd123!@') {
+      sessionStorage.setItem('zmianaoleju_cms_auth', 'true');
+      setIsAuthenticated(true);
+      setLoginError('');
+    } else {
+      setLoginError('Nieprawidłowy login lub hasło. Sprawdź wielkość liter.');
+    }
+  };
+
+  const handleLogout = () => {
+    sessionStorage.removeItem('zmianaoleju_cms_auth');
+    setIsAuthenticated(false);
+    setLoginPassword('');
+    setLoginUsername('');
+    onClose();
+  };
 
   const [activeTab, setActiveTab] = useState<'prices' | 'bookings' | 'customers' | 'settings'>('prices');
   
@@ -95,26 +128,131 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
     return matchesSearch && matchesStatus;
   });
 
+  // If not authenticated, render the dedicated CMS Login Gate
+  if (!isAuthenticated) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
+        <div className="relative w-full max-w-md bg-[#0f141f] border border-slate-800 rounded-3xl shadow-2xl p-7 sm:p-8 overflow-hidden">
+          {/* Ambient lighting */}
+          <div className="absolute top-0 right-0 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-rose-600/10 rounded-full blur-3xl pointer-events-none" />
+
+          {/* Close button */}
+          <button
+            onClick={onClose}
+            className="absolute top-5 right-5 p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
+            title="Powrót do strony głównej"
+          >
+            <X className="w-5 h-5" />
+          </button>
+
+          <div className="text-center mb-6">
+            <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-br from-amber-400 to-rose-600 p-[1.5px] shadow-xl shadow-amber-500/20 mb-4">
+              <div className="w-full h-full bg-[#0d121c] rounded-[14px] flex items-center justify-center text-amber-400">
+                <Lock className="w-7 h-7" />
+              </div>
+            </div>
+            <div className="text-xs uppercase font-extrabold tracking-widest text-amber-400 mb-1">
+              wymianaoleju.pl/CMS
+            </div>
+            <h2 className="text-2xl font-black font-heading text-white">
+              Logowanie do CMS
+            </h2>
+            <p className="text-xs text-slate-400 mt-1">
+              Panel zarządzania dostępny wyłącznie dla właściciela serwisu
+            </p>
+          </div>
+
+          <form onSubmit={handleLogin} className="space-y-4">
+            {loginError && (
+              <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs flex items-center gap-2">
+                <ShieldAlert className="w-4 h-4 shrink-0" />
+                <span>{loginError}</span>
+              </div>
+            )}
+
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
+                Login
+              </label>
+              <input
+                type="text"
+                value={loginUsername}
+                onChange={(e) => setLoginUsername(e.target.value)}
+                placeholder="Wpisz login (np. Lukasz)"
+                required
+                autoFocus
+                className="w-full px-4 py-3 bg-slate-900 border border-slate-800 focus:border-amber-400 rounded-xl text-white text-sm outline-none transition-colors"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
+                Hasło
+              </label>
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={loginPassword}
+                  onChange={(e) => setLoginPassword(e.target.value)}
+                  placeholder="Wpisz hasło"
+                  required
+                  className="w-full px-4 py-3 bg-slate-900 border border-slate-800 focus:border-amber-400 rounded-xl text-white text-sm outline-none transition-colors pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white cursor-pointer"
+                  title={showPassword ? 'Ukryj hasło' : 'Pokaż hasło'}
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              className="w-full py-3.5 px-4 rounded-xl font-bold uppercase tracking-wider text-xs text-black bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 transition-all shadow-lg shadow-amber-500/25 active:scale-[0.99] cursor-pointer mt-2"
+            >
+              Zaloguj się do CMS
+            </button>
+          </form>
+
+          <div className="mt-6 pt-4 border-t border-slate-800/80 text-center">
+            <button
+              type="button"
+              onClick={onClose}
+              className="text-xs text-slate-400 hover:text-amber-400 transition-colors inline-flex items-center gap-1.5 cursor-pointer"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Powrót do strony głównej</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/90 backdrop-blur-md overflow-y-auto">
       
       <div className="relative w-full max-w-5xl my-6 bg-[#0c1017] border border-slate-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
         
         {/* Top Header */}
-        <div className="flex items-center justify-between px-6 py-4 bg-[#111722] border-b border-slate-800 shrink-0">
+        <div className="flex flex-wrap items-center justify-between px-6 py-4 bg-[#111722] border-b border-slate-800 shrink-0 gap-3">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center">
               <Settings className="w-5 h-5" />
             </div>
             <div>
               <h3 className="font-heading font-black text-lg text-white uppercase tracking-tight flex items-center gap-2">
-                <span>Panel Zarządzania ZMIANAOLEJU.pl</span>
-                <span className="text-[10px] px-2 py-0.5 rounded bg-amber-400 text-black font-extrabold uppercase">
-                  Właściciel
+                <span>Panel Zarządzania CMS</span>
+                <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-extrabold uppercase flex items-center gap-1">
+                  <Users className="w-3 h-3" /> Lukasz
                 </span>
               </h3>
               <p className="text-xs text-slate-400">
-                Edycja cennika, stawek robocizny, rezerwacji i danych warsztatu
+                wymianaoleju.pl/CMS – Edycja cennika, rezerwacji i danych serwisu
               </p>
             </div>
           </div>
@@ -133,8 +271,17 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
               <span>Zapisz zmiany</span>
             </button>
             <button
+              onClick={handleLogout}
+              className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-red-500/20 hover:text-red-400 border border-slate-700 text-slate-300 font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+              title="Wyloguj z CMS"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Wyloguj</span>
+            </button>
+            <button
               onClick={onClose}
-              className="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800"
+              className="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
+              title="Przejdź do strony głównej"
             >
               <X className="w-5 h-5" />
             </button>

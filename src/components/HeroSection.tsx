@@ -1,6 +1,7 @@
 import React from 'react';
-import { Clock, ShieldCheck, Award, Gauge, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { Clock, ShieldCheck, Award, Gauge, ArrowRight, CheckCircle2, Tag } from 'lucide-react';
 import { WorkshopSettings } from '../data/adminStore';
+import skodaLiftImg from '../assets/images/skoda_lift_sw_plate_1793804390969.jpg';
 
 interface HeroSectionProps {
   settings: WorkshopSettings;
@@ -23,16 +24,57 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ settings, onScrollToCo
           <div className="lg:col-span-7 flex flex-col justify-center">
             
             {/* Tagline kicker */}
-            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-amber-400 mb-4">
+            {/* Tagline kicker */}
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-semibold uppercase tracking-wider text-amber-400 mb-4">
               <span>Wyspecjalizowany Punkt Wymiany Oleju</span>
               <span aria-hidden="true" className="text-slate-600">·</span>
               <span className="text-slate-300">Bez Zostawiania Auta na Cały Dzień</span>
             </div>
 
-            {/* Main Headline */}
-            <h1 className="font-heading text-4xl sm:text-5xl lg:text-6xl font-black text-white leading-[1.08] tracking-tight uppercase max-w-2xl text-balance">
-              Wymiana oleju. <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-rose-500">Szybko.</span> Profesjonalnie. <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-rose-500">Bez kompromisów.</span>
-            </h1>
+            {/* Main Headline Container with Tilted Price Tag Badge */}
+            <div className="relative mt-2">
+              
+              {/* Metka z ceną – pod kątem w stronę napisu, poniżej kickera */}
+              <div className="inline-flex sm:absolute top-0 sm:top-0 lg:top-1 right-0 sm:right-2 lg:-right-2 mb-4 sm:mb-0 transform -rotate-3 sm:-rotate-6 hover:-rotate-2 transition-transform duration-300 z-20 group max-w-full">
+                <div className="relative flex items-center gap-2 sm:gap-2.5 bg-gradient-to-br from-amber-300 via-amber-400 to-yellow-400 text-slate-950 px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-xl shadow-xl shadow-amber-500/40 border border-yellow-100/90 cursor-default select-none">
+                  
+                  {/* Oczko metki z sznurkiem w stronę napisu */}
+                  <div className="relative flex items-center justify-center shrink-0">
+                    <div className="w-2.5 h-2.5 rounded-full bg-slate-950 border border-amber-700/80 shadow-inner flex items-center justify-center">
+                      <div className="w-0.5 h-0.5 rounded-full bg-amber-400/60" />
+                    </div>
+                    {/* Sznurek metki skierowany w stronę napisu */}
+                    <div className="absolute -left-3 top-1/2 -translate-y-1/2 w-3 h-0.5 bg-amber-200/90 -rotate-45 hidden sm:block" />
+                  </div>
+
+                  <div className="flex flex-col">
+                    <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-amber-950/80 leading-none flex items-center gap-1">
+                      <Tag className="w-2.5 h-2.5 text-amber-950 stroke-[2.5]" />
+                      Wymiana ekspresowa
+                    </span>
+                    <span className="text-base sm:text-xl lg:text-2xl font-black font-heading tracking-tight text-slate-950 leading-tight">
+                      Już od <span className="text-red-700 underline decoration-red-600 decoration-2 underline-offset-2">69 zł!</span>
+                    </span>
+                  </div>
+
+                  {/* Odznaka HIT */}
+                  <span className="bg-red-600 text-white font-black text-[9px] sm:text-[10px] uppercase px-1.5 py-0.5 rounded shadow-sm ml-0.5 tracking-wider">
+                    HIT
+                  </span>
+
+                  {/* Pulsujący punkt na rogu metki */}
+                  <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-600 border border-white"></span>
+                  </span>
+                </div>
+              </div>
+
+              {/* Main Headline */}
+              <h1 className="font-heading text-3xl sm:text-5xl lg:text-6xl font-black text-white leading-[1.12] sm:leading-[1.08] tracking-tight uppercase max-w-2xl text-balance break-words">
+                Wymiana oleju. <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-rose-500">Szybko.</span> Profesjonalnie. <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-rose-500">Bez kompromisów.</span>
+              </h1>
+            </div>
 
             {/* Subtitle */}
             <p className="mt-6 text-lg sm:text-xl text-slate-300 font-normal leading-relaxed max-w-xl text-balance">
@@ -56,22 +98,22 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ settings, onScrollToCo
             <div className="mt-8 flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
               <button
                 onClick={onScrollToConfigurator}
-                className="px-8 py-4 text-sm font-bold uppercase tracking-wider text-black bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:from-amber-300 hover:to-amber-400 rounded-xl shadow-xl shadow-amber-500/20 transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-3 whitespace-nowrap cursor-pointer"
+                className="px-6 sm:px-8 py-3.5 sm:py-4 text-xs sm:text-sm font-bold uppercase tracking-wider text-black bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:from-amber-300 hover:to-amber-400 rounded-xl shadow-xl shadow-amber-500/20 transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-3 whitespace-nowrap cursor-pointer text-center"
               >
                 <span>Odbierz ofertę w kilkanaście minut</span>
-                <ArrowRight className="w-4 h-4" />
+                <ArrowRight className="w-4 h-4 shrink-0" />
               </button>
 
               <a
                 href="#oleje"
-                className="px-6 py-4 text-sm font-semibold text-slate-200 hover:text-white bg-slate-900/60 hover:bg-slate-800/80 border border-slate-800 rounded-xl transition-colors flex items-center justify-center gap-2 whitespace-nowrap"
+                className="px-5 sm:px-6 py-3.5 sm:py-4 text-xs sm:text-sm font-semibold text-slate-200 hover:text-white bg-slate-900/60 hover:bg-slate-800/80 border border-slate-800 rounded-xl transition-colors flex items-center justify-center gap-2 whitespace-normal sm:whitespace-nowrap text-center"
               >
                 <span>Poznaj 3 marki: Motul · Liqui Moly · Valvoline</span>
               </a>
             </div>
 
             {/* Unboxed metadata trust markers */}
-            <div className="mt-8 flex flex-wrap items-center gap-3 text-xs text-slate-400 pt-6 border-t border-slate-800/60">
+            <div className="mt-8 flex flex-wrap items-center gap-2 sm:gap-3 text-xs text-slate-400 pt-6 border-t border-slate-800/60">
               <span className="font-semibold text-slate-300">Czas operacyjny: do 27 min*</span>
               <span aria-hidden="true" className="text-slate-600">·</span>
               <span>100% zgodności z aprobatami producentów</span>
@@ -85,24 +127,31 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ settings, onScrollToCo
           <div className="lg:col-span-5 flex flex-col justify-center">
             <div className="relative rounded-2xl overflow-hidden border border-slate-800/80 bg-slate-900 shadow-2xl group">
               <img
-                src="/src/assets/images/skoda_lift_sw_plate_1793804390969.jpg"
+                src={skodaLiftImg}
+                onError={(e) => {
+                  const target = e.currentTarget;
+                  if (!target.src.includes('public/images')) {
+                    target.src = '/images/skoda_lift_sw_plate_1793804390969.jpg';
+                  }
+                }}
                 alt="Wymiana oleju na podnośniku – Skoda na śląskich tablicach rejestracyjnych SW w serwisie ZMIANAOLEJU.pl"
+                loading="eager"
                 referrerPolicy="no-referrer"
-                className="w-full h-[380px] sm:h-[440px] lg:h-[480px] object-cover transition-transform duration-700 group-hover:scale-105"
+                className="w-full h-[290px] xs:h-[340px] sm:h-[440px] lg:h-[480px] object-cover transition-transform duration-700 group-hover:scale-105"
               />
               
               {/* Subtle measured scrim */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-transparent pointer-events-none" />
 
               {/* Float badge bottom */}
-              <div className="absolute bottom-5 left-5 right-5 p-4 rounded-xl bg-slate-950/85 backdrop-blur-md border border-slate-800/80 flex items-center justify-between">
-                <div>
-                  <div className="text-xs uppercase tracking-widest text-amber-400 font-bold">Standard Obsługi</div>
-                  <div className="text-sm font-bold text-white mt-0.5">Stanowisko ekspresowe & klucz dynamometryczny</div>
+              <div className="absolute bottom-3 sm:bottom-5 left-3 sm:left-5 right-3 sm:right-5 p-3 sm:p-4 rounded-xl bg-slate-950/90 backdrop-blur-md border border-slate-800/80 flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="text-[10px] sm:text-xs uppercase tracking-widest text-amber-400 font-bold">Standard Obsługi</div>
+                  <div className="text-xs sm:text-sm font-bold text-white mt-0.5 truncate">Stanowisko ekspresowe & klucz Nm</div>
                 </div>
-                <div className="text-right">
-                  <div className="font-heading font-black text-2xl text-amber-400 tabular-nums">do 27 min*</div>
-                  <div className="text-[11px] text-slate-400">czas operacyjny</div>
+                <div className="text-right shrink-0">
+                  <div className="font-heading font-black text-xl sm:text-2xl text-amber-400 tabular-nums">do 27 min*</div>
+                  <div className="text-[10px] sm:text-[11px] text-slate-400">czas operacyjny</div>
                 </div>
               </div>
             </div>
@@ -111,7 +160,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ settings, onScrollToCo
         </div>
 
         {/* Full-width KPI / Value Strip below hero split */}
-        <div className="mt-14 pt-10 border-t border-slate-800/80 grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+        <div className="mt-12 sm:mt-14 pt-8 sm:pt-10 border-t border-slate-800/80 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
           
           <div className="p-5 rounded-xl bg-slate-900/40 border border-slate-800/60">
             <div className="flex items-center gap-3">

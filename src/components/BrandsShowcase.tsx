@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 import { ShieldCheck, Award, Flag, Check, ArrowRight, Zap, Sparkles } from 'lucide-react';
+import motulImg from '../assets/images/oil_showcase_motul_1793544075473.jpg';
+import liquiMolyImg from '../assets/images/oil_showcase_liquimoly_1793544075543.jpg';
+import valvolineImg from '../assets/images/oil_showcase_valvoline_1793544076223.jpg';
 
 interface BrandsShowcaseProps {
   onSelectBrandForConfigurator?: (brand: 'Motul' | 'Liqui Moly' | 'Valvoline') => void;
@@ -15,7 +18,7 @@ export const BrandsShowcase: React.FC<BrandsShowcaseProps> = ({ onSelectBrandFor
       founded: '1853 r.',
       flag: '🇫🇷',
       tagline: 'Pionier syntetyków estrowych i motorsportowych',
-      image: '/src/assets/images/oil_showcase_motul_1793544075473.jpg',
+      image: motulImg,
       accentColor: 'from-red-600 to-rose-700',
       borderAccent: 'border-red-500/50',
       badgeBg: 'bg-red-500/10 text-red-400 border-red-500/20',
@@ -34,7 +37,7 @@ export const BrandsShowcase: React.FC<BrandsShowcaseProps> = ({ onSelectBrandFor
       founded: '1957 r.',
       flag: '🇩🇪',
       tagline: 'Bezkompromisowa niemiecka inżynieria i pakiety dodatków',
-      image: '/src/assets/images/oil_showcase_liquimoly_1793544075543.jpg',
+      image: liquiMolyImg,
       accentColor: 'from-blue-600 to-indigo-700',
       borderAccent: 'border-blue-500/50',
       badgeBg: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
@@ -53,7 +56,7 @@ export const BrandsShowcase: React.FC<BrandsShowcaseProps> = ({ onSelectBrandFor
       founded: '1866 r.',
       flag: '🇺🇸',
       tagline: 'Najstarsza marka olejowa świata – ponad 150 lat innowacji',
-      image: '/src/assets/images/oil_showcase_valvoline_1793544076223.jpg',
+      image: valvolineImg,
       accentColor: 'from-blue-700 to-red-600',
       borderAccent: 'border-amber-500/50',
       badgeBg: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
@@ -114,14 +117,20 @@ export const BrandsShowcase: React.FC<BrandsShowcaseProps> = ({ onSelectBrandFor
           <div className="grid grid-cols-1 lg:grid-cols-12 items-stretch">
             
             {/* Left Col: Studio Product Photography */}
-            <div className="lg:col-span-5 relative min-h-[350px] lg:min-h-full bg-slate-950 flex items-center justify-center p-6 border-b lg:border-b-0 lg:border-r border-slate-800">
+            <div className="lg:col-span-5 relative min-h-[260px] sm:min-h-[350px] lg:min-h-full bg-slate-950 flex items-center justify-center p-4 sm:p-6 border-b lg:border-b-0 lg:border-r border-slate-800">
               <img
                 src={current.image}
+                onError={(e) => {
+                  const target = e.currentTarget;
+                  if (activeTab === 'Motul') target.src = '/images/oil_showcase_motul_1793544075473.jpg';
+                  else if (activeTab === 'Liqui Moly') target.src = '/images/oil_showcase_liquimoly_1793544075543.jpg';
+                  else target.src = '/images/oil_showcase_valvoline_1793544076223.jpg';
+                }}
                 alt={`Dedykowany olej silnikowy ${current.name}`}
                 referrerPolicy="no-referrer"
                 className="w-full h-full max-h-[420px] object-cover rounded-2xl shadow-xl transition-all duration-500 hover:scale-105"
               />
-              <div className="absolute top-8 left-8 px-3.5 py-1.5 rounded-lg bg-black/80 backdrop-blur-md border border-slate-700 text-xs font-bold text-white flex items-center gap-2">
+              <div className="absolute top-5 sm:top-8 left-5 sm:left-8 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-lg bg-black/80 backdrop-blur-md border border-slate-700 text-[11px] sm:text-xs font-bold text-white flex items-center gap-2">
                 <span>{current.flag}</span>
                 <span>{current.country}</span>
                 <span className="text-slate-500">·</span>

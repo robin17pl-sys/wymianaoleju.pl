@@ -49,6 +49,49 @@ export default function App() {
     };
   }, []);
 
+  // Check if current URL is the CMS route (/CMS, /cms, ?cms, #cms)
+  useEffect(() => {
+    const checkCmsRoute = () => {
+      const path = window.location.pathname.toLowerCase();
+      const search = window.location.search.toLowerCase();
+      const hash = window.location.hash.toLowerCase();
+      if (path.includes('/cms') || search.includes('cms') || hash === '#cms') {
+        setIsAdminModalOpen(true);
+      }
+    };
+
+    checkCmsRoute();
+    window.addEventListener('popstate', checkCmsRoute);
+    window.addEventListener('hashchange', checkCmsRoute);
+    return () => {
+      window.removeEventListener('popstate', checkCmsRoute);
+      window.removeEventListener('hashchange', checkCmsRoute);
+    };
+  }, []);
+
+  // Discrete owner shortcut (Ctrl+Shift+L) to open CMS directly
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'l') {
+        e.preventDefault();
+        window.history.pushState({}, '', '/CMS');
+        setIsAdminModalOpen(true);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  const handleCloseAdmin = () => {
+    setIsAdminModalOpen(false);
+    const path = window.location.pathname.toLowerCase();
+    const search = window.location.search.toLowerCase();
+    const hash = window.location.hash.toLowerCase();
+    if (path.includes('/cms') || search.includes('cms') || hash === '#cms') {
+      window.history.pushState({}, '', '/');
+    }
+  };
+
   const scrollToConfigurator = useCallback(() => {
     const el = document.getElementById('konfigurator');
     if (el) {
@@ -81,11 +124,10 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#0b0e14] text-slate-100 flex flex-col font-sans selection:bg-amber-500 selection:text-black">
       
-      {/* Top 3-Zone Sticky Navbar */}
+      {/* Top 3-Zone Sticky Navbar (Clean customer view) */}
       <Navbar
         settings={storeData.settings}
         onOpenBooking={() => setIsBookingModalOpen(true)}
-        onOpenAdmin={() => setIsAdminModalOpen(true)}
       />
 
       {/* Main Content Container */}
@@ -131,10 +173,9 @@ export default function App() {
 
       </main>
 
-      {/* Footer */}
+      {/* Footer (Clean customer view) */}
       <Footer
         settings={storeData.settings}
-        onOpenAdmin={() => setIsAdminModalOpen(true)}
       />
 
       {/* Booking Modal */}
@@ -146,10 +187,10 @@ export default function App() {
         onBookingSuccess={handleBookingSuccess}
       />
 
-      {/* Admin Panel Modal */}
+      {/* CMS Admin Panel Modal (wymianaoleju.pl/CMS) */}
       <AdminPanelModal
         isOpen={isAdminModalOpen}
-        onClose={() => setIsAdminModalOpen(false)}
+        onClose={handleCloseAdmin}
         initialData={storeData}
         onDataUpdated={(updated) => setStoreData(updated)}
       />

@@ -1224,11 +1224,11 @@ export const ConfiguratorSection: React.FC<ConfiguratorSectionProps> = ({ prices
                           </button>
                         </div>
 
-                        {/* Główny układ 2-kolumnowy: Kalendarz po lewej + Godziny z boku */}
-                        <div className="grid grid-cols-12 items-stretch">
+                        {/* Główny układ: Kalendarz po lewej + Godziny z boku (na mobile układ pionowy) */}
+                        <div className="grid grid-cols-1 sm:grid-cols-12 items-stretch max-h-[80vh] sm:max-h-none overflow-y-auto sm:overflow-visible">
                           
-                          {/* LEWA STRONA (Cols 1-7): Kalendarz miesięczny */}
-                          <div className="col-span-7 p-3.5 border-r border-slate-800">
+                          {/* LEWA STRONA: Kalendarz miesięczny */}
+                          <div className="sm:col-span-7 p-3 sm:p-3.5 border-b sm:border-b-0 sm:border-r border-slate-800">
                             
                             {/* Nawigacja miesiąca */}
                             <div className="flex items-center justify-between mb-3 px-1">
@@ -1321,8 +1321,8 @@ export const ConfiguratorSection: React.FC<ConfiguratorSectionProps> = ({ prices
 
                           </div>
 
-                          {/* PRAWA STRONA (Cols 8-12): Godziny z boku co 30 min (8:00 - 18:00) */}
-                          <div className="col-span-5 p-3 bg-slate-950/60 flex flex-col justify-between">
+                          {/* PRAWA STRONA: Godziny */}
+                          <div className="sm:col-span-5 p-3 bg-slate-950/60 flex flex-col justify-between">
                             
                             <div>
                               <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-amber-400 mb-1">
@@ -1333,8 +1333,8 @@ export const ConfiguratorSection: React.FC<ConfiguratorSectionProps> = ({ prices
                                 Zakres: 8:00 – 18:00
                               </div>
 
-                              {/* Przewijana lista godzin */}
-                              <div className="max-h-[210px] overflow-y-auto space-y-1 pr-1 scrollbar-thin">
+                              {/* Lista godzin: siatka na mobile, lista pionowa na desktop */}
+                              <div className="max-h-[170px] sm:max-h-[210px] grid grid-cols-4 sm:grid-cols-1 gap-1 overflow-y-auto pr-1 scrollbar-thin">
                                 {timeSlots.map((slot) => {
                                   const isSelectedTime = selectedTimeSlot === slot;
                                   return (

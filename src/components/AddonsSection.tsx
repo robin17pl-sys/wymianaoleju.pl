@@ -1,6 +1,7 @@
 import React from 'react';
 import { ShieldAlert, Sparkles, CheckCircle2, AlertCircle, ArrowRight } from 'lucide-react';
 import { ServicePrices } from '../data/adminStore';
+import metalGuardImg from '../assets/images/engine_metal_guard_1793544075865.jpg';
 
 interface AddonsSectionProps {
   prices: ServicePrices;
@@ -132,7 +133,10 @@ export const AddonsSection: React.FC<AddonsSectionProps> = ({ prices, onScrollTo
           <div className="grid grid-cols-1 lg:grid-cols-12 items-center">
             <div className="lg:col-span-5 relative h-64 lg:h-80">
               <img
-                src="/src/assets/images/engine_metal_guard_1793544075865.jpg"
+                src={metalGuardImg}
+                onError={(e) => {
+                  e.currentTarget.src = '/images/engine_metal_guard_1793544075865.jpg';
+                }}
                 alt="Ochrona elementów silnika powłoką Metal Guard"
                 referrerPolicy="no-referrer"
                 className="w-full h-full object-cover"
