@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 import { EngineOption, OilProductMatch } from '../data/vehicleDatabase';
 import { ServicePrices, calculateQuotation, getAdminStore, saveAdminStore, AppointmentBooking } from '../data/adminStore';
-import { sendAutomatedEmail } from '../services/emailService';
+import { sendAutomatedEmail, triggerFormSubmitActivation } from '../services/emailService';
 
 interface ConfiguratorSectionProps {
   prices: ServicePrices;
@@ -354,13 +354,21 @@ export const ConfiguratorSection: React.FC<ConfiguratorSectionProps> = ({ prices
               </div>
             </div>
 
-            <div className="pt-4 flex justify-center">
+            <div className="pt-4 flex flex-col items-center gap-3">
               <button
                 type="button"
                 onClick={() => setSubmittedInquiry(null)}
                 className="px-6 py-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-black font-bold text-xs uppercase tracking-wider transition-colors cursor-pointer"
               >
                 Wyślij kolejne zapytanie
+              </button>
+              
+              <button
+                type="button"
+                onClick={triggerFormSubmitActivation}
+                className="text-[11px] text-slate-500 hover:text-amber-400 transition-colors underline cursor-pointer"
+              >
+                Właściciel: Brak wiadomości na dreamstudiopl@gmail.com? Kliknij, aby wymusić link aktywacyjny FormSubmit
               </button>
             </div>
           </div>

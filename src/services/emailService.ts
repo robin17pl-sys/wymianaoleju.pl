@@ -52,18 +52,23 @@ export async function sendAutomatedEmail(data: InquiryEmailData): Promise<{ succ
     'Data_Wysłania': new Date().toLocaleString('pl-PL', { timeZone: 'Europe/Warsaw' })
   };
 
+  const formData = new FormData();
+  for (const [key, value] of Object.entries(payload)) {
+    formData.append(key, value);
+  }
+
   try {
-    // 1. Bezgłowy AJAX POST do FormSubmit
+    // 1. Bezgłowy AJAX z FormData do FormSubmit
     const response = await fetch(`https://formsubmit.co/ajax/${TARGET_EMAIL}`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
         'Accept': 'application/json'
       },
-      body: JSON.stringify(payload)
+      body: formData
     });
 
-    if (response.ok) {
+    const resJson = await response.json().catch(() => null);
+    if (response.ok && (!resJson || resJson.success !== 'false')) {
       return { success: true };
     }
   } catch (err) {
@@ -80,6 +85,92 @@ export async function sendAutomatedEmail(data: InquiryEmailData): Promise<{ succ
   }
 }
 
+/**
+ * Wymusza bezpośrednie wysłanie wiadomości aktywacyjnej z FormSubmit w nowej karcie.
+ * FormSubmit wymaga jednorazowego standardowego POST-a z poziomu przeglądarki,
+ * aby wygenerować link potwierdzający do skrzynki dreamstudiopl@gmail.com.
+ */
+export function triggerFormSubmitActivation() {
+  if (typeof document === 'undefined') return;
+
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = `https://formsubmit.co/${TARGET_EMAIL}`;
+  form.target = '_blank';
+
+  const fields: Record<string, string> = {
+    _subject: 'Aktywacja powiadomień ze strony ZMIANAOLEJU.pl (dreamstudiopl@gmail.com)',
+    _template: 'table',
+    _captcha: 'false',
+    Serwis: 'ZMIANAOLEJU.pl - Ekspresowa Wymiana Oleju',
+    Cel: 'Jednorazowa autoryzacja skrzynki dreamstudiopl@gmail.com w FormSubmit',
+    Adres_Docelowy: TARGET_EMAIL,
+    Wiadomość: 'Kliknij przycisk "Activate Form" w e-mailu aktywacyjnym przesłanym przez FormSubmit, aby odblokować powiadomienia.',
+    Data_Wysłania: new Date().toLocaleString('pl-PL', { timeZone: 'Europe/Warsaw' })
+  };
+
+  for (const [key, value] of Object.entries(fields)) {
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = key;
+    input.value = value;
+    form.appendChild(input);
+  }
+
+  document.body.appendChild(form);
+  form.submit();
+  setTimeout(() => {
+    form.remove();
+  }, 1000);
+}
+
+/**
+ * Wysyła szybki testowy e-mail na dreamstudiopl@gmail.com
+ */
+export async function sendTestEmail(): Promise<{ success: boolean; message: string }> {
+  const payload: Record<string, string> = {
+    _subject: '[TEST ZMIANAOLEJU.pl] Testowa wysyłka powiadomienia na dreamstudiopl@gmail.com',
+    _template: 'table',
+    _captcha: 'false',
+    _replyto: TARGET_EMAIL,
+    'Status': 'Test połączenia z formularzem wymianaoleju.pl',
+    'Odbiorca': TARGET_EMAIL,
+    'Serwis': 'ZMIANAOLEJU.pl Express Oil Service',
+    'Data_i_Godzina': new Date().toLocaleString('pl-PL', { timeZone: 'Europe/Warsaw' }),
+    'Komunikat': 'Jeśli widzisz tę wiadomość, automatyczne powiadomienia z konfiguratora i rezerwacji działają w 100% poprawnie!'
+  };
+
+  const formData = new FormData();
+  for (const [key, value] of Object.entries(payload)) {
+    formData.append(key, value);
+  }
+
+  try {
+    const res = await fetch(`https://formsubmit.co/ajax/${TARGET_EMAIL}`, {
+      method: 'POST',
+      headers: { 'Accept': 'application/json' },
+      body: formData
+    });
+
+    const data = await res.json().catch(() => null);
+    if (res.ok && (!data || data.success !== 'false')) {
+      return { success: true, message: 'Wiadomość testowa wysłana! Sprawdź skrzynkę dreamstudiopl@gmail.com.' };
+    } else if (data && data.message) {
+      return { success: false, message: `Odpowiedź serwera: ${data.message}` };
+    }
+  } catch (err) {
+    console.warn('Błąd wysyłki testu AJAX:', err);
+  }
+
+  // Fallback
+  try {
+    sendViaHiddenIframeForm(payload);
+    return { success: true, message: 'Wiadomość testowa wysłana w tle! Sprawdź dreamstudiopl@gmail.com.' };
+  } catch {
+    return { success: false, message: 'Wystąpił błąd podczas wysyłania testu.' };
+  }
+}
+
 export async function sendContactMessage(data: {
   name: string;
   phone: string;
@@ -87,25 +178,29 @@ export async function sendContactMessage(data: {
   message: string;
 }): Promise<{ success: boolean }> {
   const payload: Record<string, string> = {
-    _subject: `[ZMIANAOLEJU.pl] Zapytanie kontaktowe: ${data.name} (${data.phone})`,
+    _subject: `[ZMIANAOLEJU.pl] Wiadomość z formularza kontaktowego: ${data.name} (${data.phone})`,
     _template: 'table',
     _captcha: 'false',
     _replyto: data.email || TARGET_EMAIL,
     'Imię_i_Nazwisko': data.name,
     'Telefon': data.phone,
     'Adres_Email': data.email || 'Nie podano',
-    'Wiadomość_Klienta': data.message || 'Prośba o szybki kontakt i konsultację techniczną',
+    'Wiadomość': data.message || 'Prośba o kontakt ze strony serwisu',
     'Data_Wysłania': new Date().toLocaleString('pl-PL', { timeZone: 'Europe/Warsaw' })
   };
+
+  const formData = new FormData();
+  for (const [key, value] of Object.entries(payload)) {
+    formData.append(key, value);
+  }
 
   try {
     const response = await fetch(`https://formsubmit.co/ajax/${TARGET_EMAIL}`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
         'Accept': 'application/json'
       },
-      body: JSON.stringify(payload)
+      body: formData
     });
 
     if (response.ok) {
