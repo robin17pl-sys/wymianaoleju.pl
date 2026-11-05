@@ -59,6 +59,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   });
 
   const [selectedTime, setSelectedTime] = useState<string>('10:00');
+  const [isCustomDate, setIsCustomDate] = useState<boolean>(false);
 
   // Customer credentials
   const [clientName, setClientName] = useState('');
@@ -364,25 +365,54 @@ export const BookingModal: React.FC<BookingModalProps> = ({
               {/* Step A: Pick Date */}
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-2.5">
-                  1. Wybierz dzień wizyty:
+                  1. Wybierz datę wizyty (14 dni do przodu lub inna data):
                 </label>
-                <div className="flex gap-2.5 overflow-x-auto pb-2 scrollbar-thin">
-                  {availableDates.slice(0, 7).map((d) => (
+                <div className="flex gap-2.5 overflow-x-auto pb-2 scrollbar-thin select-none">
+                  {availableDates.map((d) => (
                     <button
                       type="button"
                       key={d.iso}
-                      onClick={() => setSelectedDate(d.iso)}
-                      className={`px-3.5 py-3 rounded-xl border text-center min-w-[76px] transition-all cursor-pointer ${
-                        selectedDate === d.iso
+                      onClick={() => {
+                        setSelectedDate(d.iso);
+                        setIsCustomDate(false);
+                      }}
+                      className={`px-3.5 py-3 rounded-xl border text-center min-w-[76px] shrink-0 transition-all cursor-pointer ${
+                        !isCustomDate && selectedDate === d.iso
                           ? 'bg-amber-400 text-black border-amber-400 font-bold shadow-md'
-                          : 'bg-slate-950 text-slate-300 border-slate-800 hover:border-slate-700'
+                          : 'bg-slate-950 text-slate-300 border-slate-800 hover:border-slate-700 hover:text-white'
                       }`}
                     >
                       <div className="text-[10px] uppercase font-semibold">{d.dayName}</div>
                       <div className="text-sm font-bold mt-0.5">{d.formattedDate}</div>
                     </button>
                   ))}
+
+                  {/* Kafelek na końcu: Inna data */}
+                  <button
+                    type="button"
+                    onClick={() => setIsCustomDate(true)}
+                    className={`px-3.5 py-3 rounded-xl border text-center min-w-[85px] shrink-0 transition-all cursor-pointer flex flex-col items-center justify-center ${
+                      isCustomDate
+                        ? 'bg-amber-400 text-black border-amber-400 font-bold shadow-md'
+                        : 'bg-slate-950 text-slate-300 border-slate-800 hover:border-amber-400/50 hover:text-white'
+                    }`}
+                  >
+                    <CalendarIcon className={`w-4 h-4 mb-1 ${isCustomDate ? 'text-black' : 'text-amber-400'}`} />
+                    <span className="text-xs font-bold whitespace-nowrap">Inna data</span>
+                  </button>
                 </div>
+
+                {isCustomDate && (
+                  <div className="mt-2.5 p-3 rounded-xl bg-slate-950 border border-amber-500/40 flex flex-wrap items-center gap-3">
+                    <span className="text-xs text-amber-300 font-semibold">Wybierz własną datę:</span>
+                    <input
+                      type="date"
+                      value={selectedDate}
+                      onChange={(e) => setSelectedDate(e.target.value)}
+                      className="px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:border-amber-400 font-mono"
+                    />
+                  </div>
+                )}
               </div>
 
               {/* Step B: Pick Time Slot */}

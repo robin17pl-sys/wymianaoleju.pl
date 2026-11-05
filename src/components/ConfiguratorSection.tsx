@@ -66,27 +66,61 @@ export const ConfiguratorSection: React.FC<ConfiguratorSectionProps> = ({ prices
   const [preferredDate, setPreferredDate] = useState<string>('');
   const [notes, setNotes] = useState<string>('');
 
-  // Stan otwieranego kalendarza oraz wyboru godziny (co 30 min od 8:00 do 18:00)
-  const [isDatePickerOpen, setIsDatePickerOpen] = useState<boolean>(false);
-  const [selectedCalendarDate, setSelectedCalendarDate] = useState<Date | null>(null);
+  // Sekcja wyboru terminu wizyty: data (14 dni do przodu + inna data) oraz godzina (8:00 - 18:00 co 30 min)
+  const [selectedDateIso, setSelectedDateIso] = useState<string>('');
+  const [customDateValue, setCustomDateValue] = useState<string>('');
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string>('');
-  const [calendarViewDate, setCalendarViewDate] = useState<Date>(() => new Date());
-  const datePickerRef = useRef<HTMLDivElement>(null);
 
-  // Zamykanie kalendarza po kliknięciu poza komponent
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (datePickerRef.current && !datePickerRef.current.contains(event.target as Node)) {
-        setIsDatePickerOpen(false);
-      }
-    };
-    if (isDatePickerOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
+  interface DayOption {
+    date: Date;
+    iso: string;
+    dayName: string;
+    formattedDate: string;
+    fullLabel: string;
+    isSunday: boolean;
+  }
+
+  // Generowanie 14 dni do przodu (zaczynając od dziś)
+  const available14Days: DayOption[] = React.useMemo(() => {
+    const days: DayOption[] = [];
+    const now = new Date();
+    const shortMonths = ['sty', 'lut', 'mar', 'kwi', 'maj', 'cze', 'lip', 'sie', 'wrz', 'paź', 'lis', 'gru'];
+    const fullMonths = [
+      'stycznia', 'lutego', 'marca', 'kwietnia', 'maja', 'czerwca',
+      'lipca', 'sierpnia', 'września', 'października', 'listopada', 'grudnia'
+    ];
+    const weekDayShort = ['Nd', 'Pn', 'Wt', 'Śr', 'Cz', 'Pt', 'So'];
+    const weekDayFull = ['Niedziela', 'Poniedziałek', 'Wtorek', 'Środa', 'Czwartek', 'Piątek', 'Sobota'];
+
+    for (let i = 0; i < 14; i++) {
+      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + i);
+      const dayOfWeek = d.getDay();
+      const isSunday = dayOfWeek === 0;
+
+      let dayName = weekDayShort[dayOfWeek];
+      if (i === 0) dayName = 'Dziś';
+      else if (i === 1) dayName = 'Jutro';
+
+      const formattedDate = `${d.getDate()} ${shortMonths[d.getMonth()]}`;
+      const fullLabel = `${weekDayFull[dayOfWeek]}, ${d.getDate()} ${fullMonths[d.getMonth()]}`;
+      const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+      days.push({
+        date: d,
+        iso,
+        dayName,
+        formattedDate,
+        fullLabel,
+        isSunday
+      });
     }
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isDatePickerOpen]);
+    return days;
+  }, []);
+
+  const todayIso = React.useMemo(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  }, []);
 
   // Lista godzin do wyboru co 30 min (8:00 - 18:00)
   const timeSlots = [
@@ -96,78 +130,77 @@ export const ConfiguratorSection: React.FC<ConfiguratorSectionProps> = ({ prices
     '17:00', '17:30', '18:00'
   ];
 
-  const monthNames = [
-    'Styczeń', 'Luty', 'Marzec', 'Kwiecień', 'Maj', 'Czerwiec',
-    'Lipiec', 'Sierpień', 'Wrzesień', 'Październik', 'Listopad', 'Grudzień'
-  ];
-  const dayHeaders = ['Pn', 'Wt', 'Śr', 'Cz', 'Pt', 'So', 'Nd'];
-
-  const formatPreferredDateTime = (date: Date | null, time: string) => {
-    if (!date && !time) return '';
-    if (date && time) {
-      const formatted = date.toLocaleDateString('pl-PL', { day: 'numeric', month: 'long', year: 'numeric' });
-      return `${formatted}, godz. ${time}`;
+  const updatePreferredDate = (dateIso: string, time: string, customVal?: string) => {
+    let dateText = '';
+    if (dateIso === 'custom') {
+      if (customVal) {
+        try {
+          const [y, m, d] = customVal.split('-').map(Number);
+          const parsed = new Date(y, m - 1, d);
+          dateText = parsed.toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+        } catch {
+          dateText = customVal;
+        }
+      } else {
+        dateText = 'Inna data (do ustalenia)';
+      }
+    } else if (dateIso) {
+      const matched = available14Days.find((d) => d.iso === dateIso);
+      if (matched) {
+        dateText = matched.fullLabel;
+      }
     }
-    if (date) {
-      return date.toLocaleDateString('pl-PL', { day: 'numeric', month: 'long', year: 'numeric' });
+
+    if (dateText && time) {
+      setPreferredDate(`${dateText}, godz. ${time}`);
+    } else if (dateText) {
+      setPreferredDate(dateText);
+    } else if (time) {
+      setPreferredDate(`Godz. ${time}`);
+    } else {
+      setPreferredDate('');
     }
-    return `Godz. ${time}`;
   };
 
-  const handleSelectCalendarDay = (day: number) => {
-    const chosen = new Date(calendarViewDate.getFullYear(), calendarViewDate.getMonth(), day);
-    setSelectedCalendarDate(chosen);
-    setPreferredDate(formatPreferredDateTime(chosen, selectedTimeSlot));
+  const handleSelectDay = (day: DayOption) => {
+    if (day.isSunday) return;
+    if (selectedDateIso === day.iso) {
+      setSelectedDateIso('');
+      updatePreferredDate('', selectedTimeSlot);
+    } else {
+      setSelectedDateIso(day.iso);
+      updatePreferredDate(day.iso, selectedTimeSlot);
+    }
   };
 
-  const handleSelectTimeSlot = (slot: string) => {
-    setSelectedTimeSlot(slot);
-    setPreferredDate(formatPreferredDateTime(selectedCalendarDate, slot));
+  const handleSelectCustomDate = () => {
+    if (selectedDateIso === 'custom') {
+      setSelectedDateIso('');
+      updatePreferredDate('', selectedTimeSlot);
+    } else {
+      setSelectedDateIso('custom');
+      updatePreferredDate('custom', selectedTimeSlot, customDateValue);
+    }
   };
 
-  const handleClearDateTime = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setSelectedCalendarDate(null);
+  const handleCustomDateChange = (val: string) => {
+    setCustomDateValue(val);
+    setSelectedDateIso('custom');
+    updatePreferredDate('custom', selectedTimeSlot, val);
+  };
+
+  const handleSelectTime = (slot: string) => {
+    const newSlot = selectedTimeSlot === slot ? '' : slot;
+    setSelectedTimeSlot(newSlot);
+    updatePreferredDate(selectedDateIso, newSlot, customDateValue);
+  };
+
+  const handleClearDateTime = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setSelectedDateIso('');
     setSelectedTimeSlot('');
+    setCustomDateValue('');
     setPreferredDate('');
-  };
-
-  // Dane miesiąca do kalendarza
-  const viewYear = calendarViewDate.getFullYear();
-  const viewMonth = calendarViewDate.getMonth();
-  const firstDayOfMonth = new Date(viewYear, viewMonth, 1);
-  const startingOffset = (firstDayOfMonth.getDay() + 6) % 7; // 0 = Poniedziałek
-  const daysInCurrentMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
-
-  const todayDate = new Date();
-  todayDate.setHours(0, 0, 0, 0);
-
-  const isDayPast = (day: number) => {
-    const d = new Date(viewYear, viewMonth, day);
-    return d < todayDate;
-  };
-
-  const isDaySunday = (day: number) => {
-    const d = new Date(viewYear, viewMonth, day);
-    return d.getDay() === 0;
-  };
-
-  const isDaySelected = (day: number) => {
-    if (!selectedCalendarDate) return false;
-    return (
-      selectedCalendarDate.getFullYear() === viewYear &&
-      selectedCalendarDate.getMonth() === viewMonth &&
-      selectedCalendarDate.getDate() === day
-    );
-  };
-
-  const isDayToday = (day: number) => {
-    const now = new Date();
-    return (
-      now.getFullYear() === viewYear &&
-      now.getMonth() === viewMonth &&
-      now.getDate() === day
-    );
   };
 
   // Walidacja i stan wysyłki
@@ -1176,230 +1209,146 @@ export const ConfiguratorSection: React.FC<ConfiguratorSectionProps> = ({ prices
                     </div>
                   </div>
 
-                  {/* Preferowany termin wizyty z otwieranym kalendarzem i wyborem godziny */}
-                  <div className="relative" ref={datePickerRef}>
-                    <div className="flex items-center justify-between mb-1">
-                      <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-300">
-                        Preferowany termin wizyty (opcjonalnie)
-                      </label>
-                      <span className="text-[10px] text-amber-400 font-medium">Kalendarz & godziny 8:00 - 18:00</span>
-                    </div>
+                  {/* SEKCJA TERMINU WIZYTY: 2 OSOBNE LINIJKI */}
+                  <div className="pt-2 pb-1 space-y-4">
+                    
+                    {/* LINIJKA 1: WYBÓR DATY (14 DNI DO PRZODU + INNA DATA NA KOŃCU) */}
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="text-[11px] font-bold uppercase tracking-wider text-slate-200 flex items-center gap-1.5">
+                          <Calendar className="w-3.5 h-3.5 text-amber-400" />
+                          <span>1. Data wizyty (14 dni do przodu):</span>
+                        </label>
+                        <span className="text-[10px] text-slate-400 hidden sm:inline">
+                          Pn–Pt 7:30–19:00 · Sob 8:00–15:00
+                        </span>
+                      </div>
 
-                    {/* Przycisk aktywujący kalendarz */}
-                    <div 
-                      onClick={() => setIsDatePickerOpen(!isDatePickerOpen)}
-                      className={`relative w-full pl-10 pr-10 py-2.5 bg-slate-950 border rounded-xl text-xs cursor-pointer flex items-center justify-between transition-all select-none ${
-                        isDatePickerOpen ? 'border-amber-400 ring-2 ring-amber-400/20' : 'border-slate-800 hover:border-slate-700'
-                      }`}
-                    >
-                      <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-400" />
-                      
-                      <span className={preferredDate ? "font-semibold text-amber-300" : "text-slate-500"}>
-                        {preferredDate || "Wskaż preferowaną datę i godzinę..."}
-                      </span>
+                      {/* Horyzontalny przewijalny pasek 14 dni + przycisk "Inna data" na końcu */}
+                      <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin select-none">
+                        {available14Days.map((d) => {
+                          const isSelected = selectedDateIso === d.iso;
+                          return (
+                            <button
+                              type="button"
+                              key={d.iso}
+                              disabled={d.isSunday}
+                              onClick={() => handleSelectDay(d)}
+                              title={d.isSunday ? 'Niedziela – serwis zamknięty' : d.fullLabel}
+                              className={`px-3 py-2 rounded-xl border text-center min-w-[70px] sm:min-w-[74px] shrink-0 transition-all cursor-pointer ${
+                                isSelected
+                                  ? 'bg-amber-400 text-black border-amber-400 font-bold shadow-lg shadow-amber-500/20 scale-[1.02] ring-2 ring-amber-400/40'
+                                  : d.isSunday
+                                  ? 'bg-slate-950/40 text-slate-600 border-slate-900 cursor-not-allowed opacity-40'
+                                  : 'bg-slate-950 text-slate-300 border-slate-800 hover:border-slate-700 hover:text-white'
+                              }`}
+                            >
+                              <div className={`text-[10px] uppercase font-bold ${
+                                isSelected ? 'text-black' : d.isSunday ? 'text-slate-600' : 'text-amber-400'
+                              }`}>
+                                {d.dayName}
+                              </div>
+                              <div className="text-xs font-black mt-0.5 whitespace-nowrap">
+                                {d.formattedDate}
+                              </div>
+                              {d.isSunday && (
+                                <div className="text-[9px] text-rose-400/80 mt-0.5">zamknięte</div>
+                              )}
+                            </button>
+                          );
+                        })}
 
-                      {preferredDate ? (
+                        {/* Kafelek na końcu: "Inna data" */}
                         <button
                           type="button"
-                          onClick={handleClearDateTime}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-white rounded hover:bg-slate-800 transition-colors"
-                          title="Wyczyść wybrany termin"
+                          onClick={handleSelectCustomDate}
+                          className={`px-3 py-2 rounded-xl border text-center min-w-[85px] shrink-0 transition-all cursor-pointer flex flex-col items-center justify-center ${
+                            selectedDateIso === 'custom'
+                              ? 'bg-amber-400 text-black border-amber-400 font-bold shadow-lg shadow-amber-500/20 ring-2 ring-amber-400/40 scale-[1.02]'
+                              : 'bg-slate-950 text-slate-300 border-slate-800 hover:border-amber-400/50 hover:text-white'
+                          }`}
                         >
-                          <X className="w-3.5 h-3.5" />
+                          <Calendar className={`w-3.5 h-3.5 ${selectedDateIso === 'custom' ? 'text-black' : 'text-amber-400'}`} />
+                          <span className="text-[11px] font-bold mt-1 whitespace-nowrap">Inna data</span>
                         </button>
-                      ) : (
-                        <Clock className="absolute right-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500" />
+                      </div>
+
+                      {/* Pole wpisania własnej daty po kliknięciu "Inna data" */}
+                      {selectedDateIso === 'custom' && (
+                        <div className="mt-2.5 p-3 rounded-xl bg-slate-950 border border-amber-500/40 flex flex-wrap items-center gap-3">
+                          <span className="text-xs text-amber-300 font-semibold flex items-center gap-1.5">
+                            <Calendar className="w-4 h-4 text-amber-400" />
+                            <span>Wybierz własną datę:</span>
+                          </span>
+                          <input
+                            type="date"
+                            min={todayIso}
+                            value={customDateValue}
+                            onChange={(e) => handleCustomDateChange(e.target.value)}
+                            className="px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:border-amber-400 font-mono"
+                          />
+                          {customDateValue && (
+                            <span className="text-[11px] text-slate-400">
+                              Wybrano: <strong className="text-white">{customDateValue}</strong>
+                            </span>
+                          )}
+                        </div>
                       )}
                     </div>
 
-                    {/* Otwierany popover z kalendarzem i godzinami */}
-                    {isDatePickerOpen && (
-                      <div className="absolute top-full left-0 right-0 sm:right-auto sm:w-[480px] mt-2 z-50 bg-[#0d121c] border border-slate-700/90 rounded-2xl shadow-2xl overflow-hidden backdrop-blur-xl">
-                        
-                        {/* Pasek nagłówka */}
-                        <div className="px-4 py-2.5 bg-[#121826] border-b border-slate-800 flex items-center justify-between text-xs">
-                          <span className="font-bold text-white flex items-center gap-1.5">
-                            <Calendar className="w-3.5 h-3.5 text-amber-400" />
-                            Wybierz dzień i godzinę wizyty
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => setIsDatePickerOpen(false)}
-                            className="text-slate-400 hover:text-white p-1 rounded hover:bg-slate-800 transition-colors"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
-                        </div>
+                    {/* LINIJKA 2: WYBÓR GODZINY (8:00 DO 18:00 CO 30 MIN) */}
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="text-[11px] font-bold uppercase tracking-wider text-slate-200 flex items-center gap-1.5">
+                          <Clock className="w-3.5 h-3.5 text-amber-400" />
+                          <span>2. Godzina wizyty (od 8:00 do 18:00 co 30 min):</span>
+                        </label>
+                        <span className="text-[10px] text-amber-400 font-semibold">
+                          Wymiana do 27 min
+                        </span>
+                      </div>
 
-                        {/* Główny układ: Kalendarz po lewej + Godziny z boku (na mobile układ pionowy) */}
-                        <div className="grid grid-cols-1 sm:grid-cols-12 items-stretch max-h-[80vh] sm:max-h-none overflow-y-auto sm:overflow-visible">
-                          
-                          {/* LEWA STRONA: Kalendarz miesięczny */}
-                          <div className="sm:col-span-7 p-3 sm:p-3.5 border-b sm:border-b-0 sm:border-r border-slate-800">
-                            
-                            {/* Nawigacja miesiąca */}
-                            <div className="flex items-center justify-between mb-3 px-1">
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setCalendarViewDate(new Date(viewYear, viewMonth - 1, 1));
-                                }}
-                                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
-                              >
-                                <ChevronLeft className="w-4 h-4" />
-                              </button>
-
-                              <span className="font-heading font-black text-xs text-white uppercase tracking-wider">
-                                {monthNames[viewMonth]} {viewYear}
-                              </span>
-
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setCalendarViewDate(new Date(viewYear, viewMonth + 1, 1));
-                                }}
-                                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
-                              >
-                                <ChevronRight className="w-4 h-4" />
-                              </button>
-                            </div>
-
-                            {/* Nagłówki dni tygodnia */}
-                            <div className="grid grid-cols-7 gap-1 text-center mb-1.5">
-                              {dayHeaders.map((dh, i) => (
-                                <span 
-                                  key={dh} 
-                                  className={`text-[10px] font-bold uppercase tracking-wider ${
-                                    i === 6 ? 'text-rose-400/80' : 'text-slate-400'
-                                  }`}
-                                >
-                                  {dh}
-                                </span>
-                              ))}
-                            </div>
-
-                            {/* Siatka dni */}
-                            <div className="grid grid-cols-7 gap-1">
-                              {/* Puste komórki na początek miesiąca */}
-                              {Array.from({ length: startingOffset }).map((_, idx) => (
-                                <div key={`empty-${idx}`} className="w-7 h-7" />
-                              ))}
-
-                              {/* Dni miesiąca */}
-                              {Array.from({ length: daysInCurrentMonth }).map((_, idx) => {
-                                const dayNum = idx + 1;
-                                const isPast = isDayPast(dayNum);
-                                const isSun = isDaySunday(dayNum);
-                                const isSelected = isDaySelected(dayNum);
-                                const isToday = isDayToday(dayNum);
-                                const isDisabled = isPast || isSun;
-
-                                return (
-                                  <button
-                                    type="button"
-                                    key={`day-${dayNum}`}
-                                    disabled={isDisabled}
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleSelectCalendarDay(dayNum);
-                                    }}
-                                    title={isSun ? 'Niedziela – serwis zamknięty' : undefined}
-                                    className={`w-7 h-7 mx-auto rounded-lg text-xs font-semibold flex items-center justify-center transition-all ${
-                                      isSelected
-                                        ? 'bg-amber-400 text-black font-black shadow-md scale-105'
-                                        : isDisabled
-                                        ? 'text-slate-600 opacity-40 cursor-not-allowed'
-                                        : isToday
-                                        ? 'border border-amber-400/80 text-amber-300 font-bold hover:bg-slate-800'
-                                        : 'text-slate-200 hover:bg-slate-800 hover:text-white'
-                                    }`}
-                                  >
-                                    {dayNum}
-                                  </button>
-                                );
-                              })}
-                            </div>
-
-                            <div className="mt-3 pt-2 border-t border-slate-800/80 text-[10px] text-slate-500 text-center">
-                              Pn–Pt 7:30–19:00 · Sob 8:00–15:00
-                            </div>
-
-                          </div>
-
-                          {/* PRAWA STRONA: Godziny */}
-                          <div className="sm:col-span-5 p-3 bg-slate-950/60 flex flex-col justify-between">
-                            
-                            <div>
-                              <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-amber-400 mb-1">
-                                <Clock className="w-3 h-3" />
-                                <span>Godzina (co 30 min)</span>
-                              </div>
-                              <div className="text-[10px] text-slate-400 mb-2">
-                                Zakres: 8:00 – 18:00
-                              </div>
-
-                              {/* Lista godzin: siatka na mobile, lista pionowa na desktop */}
-                              <div className="max-h-[170px] sm:max-h-[210px] grid grid-cols-4 sm:grid-cols-1 gap-1 overflow-y-auto pr-1 scrollbar-thin">
-                                {timeSlots.map((slot) => {
-                                  const isSelectedTime = selectedTimeSlot === slot;
-                                  return (
-                                    <button
-                                      type="button"
-                                      key={slot}
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleSelectTimeSlot(slot);
-                                      }}
-                                      className={`w-full py-1 px-2 rounded-md text-xs font-mono font-bold text-center transition-all cursor-pointer ${
-                                        isSelectedTime
-                                          ? 'bg-amber-400 text-black shadow-sm ring-1 ring-amber-400'
-                                          : 'bg-slate-900/90 text-slate-300 border border-slate-800 hover:border-slate-700 hover:text-white'
-                                      }`}
-                                    >
-                                      {slot}
-                                    </button>
-                                  );
-                                })}
-                              </div>
-                            </div>
-
-                          </div>
-
-                        </div>
-
-                        {/* Dolny pasek podsumowania i zatwierdzenia */}
-                        <div className="p-3 bg-[#111722] border-t border-slate-800 flex items-center justify-between text-xs">
-                          <div className="truncate max-w-[280px]">
-                            <span className="text-[10px] text-slate-400 uppercase font-medium">Wybrano: </span>
-                            <span className="font-bold text-amber-300">
-                              {preferredDate || 'Wybierz dzień i godzinę'}
-                            </span>
-                          </div>
-
-                          <div className="flex items-center gap-2">
-                            {preferredDate && (
-                              <button
-                                type="button"
-                                onClick={handleClearDateTime}
-                                className="px-2.5 py-1 text-[11px] text-slate-400 hover:text-white transition-colors"
-                              >
-                                Wyczyść
-                              </button>
-                            )}
+                      <div className="grid grid-cols-4 sm:grid-cols-7 gap-1.5 sm:gap-2 select-none">
+                        {timeSlots.map((slot) => {
+                          const isSelected = selectedTimeSlot === slot;
+                          return (
                             <button
                               type="button"
-                              onClick={() => setIsDatePickerOpen(false)}
-                              className="px-3.5 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-black font-bold text-xs uppercase tracking-wider transition-colors cursor-pointer"
+                              key={slot}
+                              onClick={() => handleSelectTime(slot)}
+                              className={`py-2 px-1 text-center rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
+                                isSelected
+                                  ? 'bg-amber-400 text-black shadow-md ring-2 ring-amber-400/40 font-black scale-[1.02]'
+                                  : 'bg-slate-950 text-slate-300 border border-slate-800 hover:border-slate-700 hover:text-white'
+                              }`}
                             >
-                              Zatwierdź
+                              {slot}
                             </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Podsumowanie wybranego terminu (jeśli wybrano) */}
+                    {preferredDate && (
+                      <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-2">
+                          <CheckCircle className="w-4 h-4 text-amber-400 shrink-0" />
+                          <div>
+                            <span className="text-slate-400 text-[11px]">Wybrany termin wizyty: </span>
+                            <strong className="text-amber-300 font-semibold">{preferredDate}</strong>
                           </div>
                         </div>
-
+                        <button
+                          type="button"
+                          onClick={handleClearDateTime}
+                          className="text-[11px] text-slate-400 hover:text-white underline cursor-pointer shrink-0 ml-2"
+                        >
+                          Wyczyść
+                        </button>
                       </div>
                     )}
+
                   </div>
 
                   <div>
