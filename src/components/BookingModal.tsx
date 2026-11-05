@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { AppointmentBooking, ServicePrices, calculateQuotation, saveAdminStore, getAdminStore } from '../data/adminStore';
 import { EngineOption, OilProductMatch } from '../data/vehicleDatabase';
+import { sendAutomatedEmail } from '../services/emailService';
 
 interface BookingModalProps {
   isOpen: boolean;
@@ -185,6 +186,27 @@ export const BookingModal: React.FC<BookingModalProps> = ({
     const store = getAdminStore();
     store.bookings.unshift(newBooking);
     saveAdminStore(store);
+
+    // Automatyczna wysyłka e-maila na adres dreamstudiopl@gmail.com w tle
+    sendAutomatedEmail({
+      referenceNumber: newBooking.referenceNumber,
+      clientName: newBooking.clientName,
+      phone: newBooking.phone,
+      email: newBooking.email,
+      registrationPlate: newBooking.registrationPlate,
+      vehicleMake: newBooking.vehicleMake,
+      vehicleModel: newBooking.vehicleModel,
+      vehicleYear: config.vehicleYear || '',
+      vehicleEngine: newBooking.vehicleEngine,
+      fuelType: config.vehicleFuel || 'Nie określono',
+      selectedOilBrand: newBooking.selectedOilBrand,
+      selectedFilterBrand: newBooking.selectedFilterBrand || 'Standard',
+      includeFlush: newBooking.includeEngineFlush,
+      includeMetalGuard: newBooking.includeMetalGuard,
+      preferredDate: `${newBooking.date} godz. ${newBooking.timeSlot}`,
+      notes: newBooking.notes,
+      source: 'Rezerwacja Terminu'
+    });
 
     setTimeout(() => {
       setIsSubmitting(false);

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { MapPin, Phone, Mail, Clock, Navigation, Send, CheckCircle2 } from 'lucide-react';
 import { WorkshopSettings } from '../data/adminStore';
+import { sendContactMessage } from '../services/emailService';
 
 interface ContactSectionProps {
   settings: WorkshopSettings;
@@ -20,17 +21,8 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ settings }) => {
     if (!formData.name || !formData.phone) return;
     setFormSent(true);
     
-    // Mailto dispatch directed to dreamstudiopl@gmail.com
-    try {
-      const subject = encodeURIComponent(`[ZMIANAOLEJU.pl] Zapytanie techniczne: ${formData.name} (${formData.phone})`);
-      const body = encodeURIComponent(
-        `Imię: ${formData.name}\nNumer telefonu: ${formData.phone}\nAdres e-mail: ${formData.email || 'Nie podano'}\n\nTreść zapytania / dane auta:\n${formData.message || 'Prośba o szybki kontakt i konsultację techniczną.'}`
-      );
-      const mailtoUrl = `mailto:dreamstudiopl@gmail.com?subject=${subject}&body=${body}`;
-      window.location.href = mailtoUrl;
-    } catch {
-      // safe fallback
-    }
+    // Automatyczna wysyłka w tle na dreamstudiopl@gmail.com
+    sendContactMessage(formData);
   };
 
   const fullAddress = `${settings.addressStreet}, ${settings.addressPostalCode} ${settings.addressCity}`;

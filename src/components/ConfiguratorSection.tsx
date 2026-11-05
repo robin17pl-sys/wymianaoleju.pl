@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { EngineOption, OilProductMatch } from '../data/vehicleDatabase';
 import { ServicePrices, calculateQuotation, getAdminStore, saveAdminStore, AppointmentBooking } from '../data/adminStore';
+import { sendAutomatedEmail } from '../services/emailService';
 
 interface ConfiguratorSectionProps {
   prices: ServicePrices;
@@ -249,28 +250,26 @@ export const ConfiguratorSection: React.FC<ConfiguratorSectionProps> = ({ prices
     store.bookings.unshift(newBooking);
     saveAdminStore(store);
 
-    // Prepare dispatch directed to dreamstudiopl@gmail.com
-    try {
-      const emailSubject = encodeURIComponent(`[ZMIANAOLEJU.pl] Zapytanie ${refNum}: ${vehicleMake.trim()} ${vehicleModel.trim()}`);
-      const emailBody = encodeURIComponent(
-        `Nowe zapytanie z konfiguratora ZMIANAOLEJU.pl:\n\n` +
-        `Nr ref: ${refNum}\n` +
-        `Klient: ${clientName.trim()}\n` +
-        `Telefon: ${phone.trim()}\n` +
-        `E-mail: ${email.trim()}\n` +
-        `Auto: ${vehicleMake.trim()} ${vehicleModel.trim()} (${vehicleYear.trim()}) - ${vehicleEngine.trim()} [${fuelType}]\n` +
-        `Olej: ${selectedBrand}\n` +
-        `Filtr: ${effectiveFilterBrand}\n` +
-        `Płukanie silnika: ${includeFlush ? 'TAK' : 'NIE'}\n` +
-        `Metal Guard: ${includeMetalGuard ? 'TAK' : 'NIE'}\n` +
-        `Uwagi: ${notes.trim() || 'Brak'}`
-      );
-      const mailtoLink = `mailto:dreamstudiopl@gmail.com?subject=${emailSubject}&body=${emailBody}`;
-      // We can trigger mail client or retain copy
-      window.location.href = mailtoLink;
-    } catch {
-      // safe fallback
-    }
+    // Automatyczna wysyłka wiadomości na adres dreamstudiopl@gmail.com w tle
+    sendAutomatedEmail({
+      referenceNumber: refNum,
+      clientName: clientName.trim(),
+      phone: phone.trim(),
+      email: email.trim(),
+      registrationPlate: registrationPlate.trim().toUpperCase(),
+      vehicleMake: vehicleMake.trim(),
+      vehicleModel: vehicleModel.trim(),
+      vehicleYear: vehicleYear.trim(),
+      vehicleEngine: vehicleEngine.trim(),
+      fuelType: fuelType,
+      selectedOilBrand: selectedBrand,
+      selectedFilterBrand: effectiveFilterBrand,
+      includeFlush: includeFlush,
+      includeMetalGuard: includeMetalGuard,
+      preferredDate: preferredDate || 'Do ustalenia w ofercie',
+      notes: notes.trim(),
+      source: 'Konfigurator Wyceny'
+    });
 
     setTimeout(() => {
       setIsSubmitting(false);
