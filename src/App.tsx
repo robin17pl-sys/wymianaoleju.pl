@@ -142,6 +142,7 @@ export default function App() {
         {/* Intelligent Price Configurator (Crown Jewel) */}
         <ConfiguratorSection
           prices={storeData.prices}
+          bookings={storeData.bookings}
           onProceedToBooking={handleProceedToBooking}
         />
 
@@ -184,6 +185,7 @@ export default function App() {
         onClose={() => setIsBookingModalOpen(false)}
         initialConfig={selectedBookingConfig}
         prices={storeData.prices}
+        bookings={storeData.bookings}
         onBookingSuccess={handleBookingSuccess}
       />
 

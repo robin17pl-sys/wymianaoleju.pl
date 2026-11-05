@@ -235,3 +235,29 @@ export function calculateQuotation(
     totalBrutto
   };
 }
+
+/**
+ * Sprawdza, czy dla danej daty i godziny istnieje potwierdzona rezerwacja w CMS.
+ * Jeśli rezerwacja ma status 'Potwierdzona' lub 'Zrealizowana', slot jest blokowany na stronie na szaro.
+ */
+export function isBookingConfirmedForSlot(
+  bookings: AppointmentBooking[] | undefined,
+  dateStr: string,
+  timeSlot: string
+): boolean {
+  if (!bookings || !dateStr || !timeSlot) return false;
+
+  const normalize = (d: string) => {
+    if (!d) return '';
+    const clean = d.split('T')[0].trim();
+    return clean;
+  };
+
+  const target = normalize(dateStr);
+
+  return bookings.some((b) => {
+    if (b.status !== 'Potwierdzona' && b.status !== 'Zrealizowana') return false;
+    const bDate = normalize(b.date);
+    return bDate === target && b.timeSlot === timeSlot;
+  });
+}

@@ -23,7 +23,14 @@ import {
   Send,
   ExternalLink,
   AlertCircle,
-  RefreshCw
+  RefreshCw,
+  Unlock,
+  Plus,
+  ChevronLeft,
+  ChevronRight,
+  CheckCircle2,
+  CalendarDays,
+  CheckCheck
 } from 'lucide-react';
 import { 
   AdminStoreData, 
@@ -31,7 +38,8 @@ import {
   resetAdminStore, 
   AppointmentBooking, 
   ServicePrices, 
-  WorkshopSettings 
+  WorkshopSettings,
+  isBookingConfirmedForSlot
 } from '../data/adminStore';
 import { TARGET_EMAIL, triggerFormSubmitActivation, sendTestEmail } from '../services/emailService';
 
@@ -78,13 +86,59 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
     onClose();
   };
 
-  const [activeTab, setActiveTab] = useState<'prices' | 'bookings' | 'customers' | 'settings' | 'email'>('prices');
+  const [activeTab, setActiveTab] = useState<'calendar' | 'bookings' | 'prices' | 'customers' | 'settings' | 'email'>('calendar');
   
   // Local state for editing
   const [prices, setPrices] = useState<ServicePrices>({ ...initialData.prices });
   const [settings, setSettings] = useState<WorkshopSettings>({ ...initialData.settings });
   const [bookings, setBookings] = useState<AppointmentBooking[]>([...initialData.bookings]);
   
+  // Calendar Terminarz state
+  const [calendarDate, setCalendarDate] = useState<string>(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  });
+
+  const [manualBlockSlot, setManualBlockSlot] = useState<string | null>(null);
+  const [manualClientName, setManualClientName] = useState<string>('');
+  const [manualPlate, setManualPlate] = useState<string>('');
+  const [manualCar, setManualCar] = useState<string>('');
+  const [statusActionMessage, setStatusActionMessage] = useState<string | null>(null);
+
+  const timeSlots = [
+    '08:00', '08:30', '09:00', '09:30', '10:00', '10:30',
+    '11:00', '11:30', '12:00', '12:30', '13:00', '13:30',
+    '14:00', '14:30', '15:00', '15:30', '16:00', '16:30',
+    '17:00', '17:30', '18:00'
+  ];
+
+  const goToPrevDay = () => {
+    const [y, m, d] = calendarDate.split('-').map(Number);
+    const prev = new Date(y, m - 1, d - 1);
+    setCalendarDate(`${prev.getFullYear()}-${String(prev.getMonth() + 1).padStart(2, '0')}-${String(prev.getDate()).padStart(2, '0')}`);
+  };
+
+  const goToNextDay = () => {
+    const [y, m, d] = calendarDate.split('-').map(Number);
+    const next = new Date(y, m - 1, d + 1);
+    setCalendarDate(`${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, '0')}-${String(next.getDate()).padStart(2, '0')}`);
+  };
+
+  const goToToday = () => {
+    const now = new Date();
+    setCalendarDate(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`);
+  };
+
+  const formatCalendarHeaderDate = (isoStr: string) => {
+    try {
+      const [y, m, d] = isoStr.split('-').map(Number);
+      const dateObj = new Date(y, m - 1, d);
+      return dateObj.toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    } catch {
+      return isoStr;
+    }
+  };
+
   // Search query for bookings/customers
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -138,6 +192,60 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
     const storeUpdated = { prices, settings, bookings: updated };
     saveAdminStore(storeUpdated);
     onDataUpdated(storeUpdated);
+
+    if (newStatus === 'Potwierdzona') {
+      setStatusActionMessage('✓ Termin został potwierdzony! Ta godzina jest teraz zablokowana i wyszarzona na stronie.');
+      setTimeout(() => setStatusActionMessage(null), 4000);
+    } else if (newStatus === 'Odwołana') {
+      setStatusActionMessage('✓ Rezerwacja została odwołana. Godzina jest ponownie dostępna na stronie.');
+      setTimeout(() => setStatusActionMessage(null), 4000);
+    }
+  };
+
+  // Confirm booking with 1-click
+  const handleConfirmBooking = (bookingId: string) => {
+    handleStatusChange(bookingId, 'Potwierdzona');
+  };
+
+  // Manual slot blocking by owner
+  const handleCreateManualBlock = (slot: string) => {
+    const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+    const newBooking: AppointmentBooking = {
+      id: `blk-${Date.now()}`,
+      referenceNumber: `BLOK-${new Date().getFullYear()}-${randomSuffix}`,
+      createdAt: new Date().toISOString().replace('T', ' ').substring(0, 16),
+      date: calendarDate,
+      timeSlot: slot,
+      clientName: manualClientName.trim() || 'Blokada ręczna (CMS)',
+      phone: 'Panel CMS',
+      email: 'kontakt@wymianaoleju.pl',
+      registrationPlate: manualPlate.trim().toUpperCase() || 'SERWIS',
+      vehicleMake: manualCar.trim() || 'Blokada / Serwis stacjonarny',
+      vehicleModel: '',
+      vehicleEngine: 'Warsztat',
+      selectedOilBrand: 'Motul',
+      oilProductName: 'Blokada stanowiska w CMS',
+      oilQuantityLiters: 4.5,
+      includeEngineFlush: false,
+      includeMetalGuard: false,
+      totalNetto: 0,
+      totalBrutto: 0,
+      status: 'Potwierdzona',
+      notes: 'Ręczna blokada terminu i godziny przez właściciela'
+    };
+
+    const updated = [newBooking, ...bookings];
+    setBookings(updated);
+    const storeUpdated = { prices, settings, bookings: updated };
+    saveAdminStore(storeUpdated);
+    onDataUpdated(storeUpdated);
+
+    setManualBlockSlot(null);
+    setManualClientName('');
+    setManualPlate('');
+    setManualCar('');
+    setStatusActionMessage(`✓ Godzina ${slot} w dniu ${calendarDate} została potwierdzona i zablokowana na stronie!`);
+    setTimeout(() => setStatusActionMessage(null), 4000);
   };
 
   // Filtered bookings
@@ -311,18 +419,31 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
           </div>
         </div>
 
+        {/* Global action feedback banner */}
+        {statusActionMessage && (
+          <div className="bg-emerald-950/80 border-b border-emerald-500/40 text-emerald-300 text-xs py-2 px-6 flex items-center gap-2 animate-fadeIn shrink-0">
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+            <span className="font-semibold">{statusActionMessage}</span>
+          </div>
+        )}
+
         {/* Navigation Tabs */}
         <div className="flex items-center px-6 bg-[#0e131d] border-b border-slate-800/80 gap-2 shrink-0 overflow-x-auto">
           <button
-            onClick={() => setActiveTab('prices')}
+            onClick={() => setActiveTab('calendar')}
             className={`px-4 py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors flex items-center gap-2 cursor-pointer whitespace-nowrap ${
-              activeTab === 'prices'
+              activeTab === 'calendar'
                 ? 'border-amber-400 text-amber-400'
                 : 'border-transparent text-slate-400 hover:text-white'
             }`}
           >
-            <DollarSign className="w-4 h-4" />
-            <span>Cennik Olejów i Usług</span>
+            <CalendarDays className="w-4 h-4" />
+            <span>Kalendarz & Terminarz</span>
+            {bookings.filter(b => b.status === 'Oczekująca').length > 0 && (
+              <span className="px-1.5 py-0.5 rounded-full bg-amber-400 text-black font-extrabold text-[10px]">
+                {bookings.filter(b => b.status === 'Oczekująca').length}
+              </span>
+            )}
           </button>
 
           <button
@@ -334,7 +455,19 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
             }`}
           >
             <Calendar className="w-4 h-4" />
-            <span>Rezerwacje ({bookings.length})</span>
+            <span>Lista Zleceń ({bookings.length})</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('prices')}
+            className={`px-4 py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors flex items-center gap-2 cursor-pointer whitespace-nowrap ${
+              activeTab === 'prices'
+                ? 'border-amber-400 text-amber-400'
+                : 'border-transparent text-slate-400 hover:text-white'
+            }`}
+          >
+            <DollarSign className="w-4 h-4" />
+            <span>Cennik Olejów i Usług</span>
           </button>
 
           <button
@@ -378,6 +511,366 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
         {/* Tab Content Area (Scrollable) */}
         <div className="p-6 overflow-y-auto flex-1 space-y-6">
           
+          {/* TAB 0: KALENDARZ & TERMINARZ WARSZTATU (GŁÓWNY ZARZĄDCA DOSTĘPNOŚCI GODZIN) */}
+          {activeTab === 'calendar' && (() => {
+            const normalizeDate = (d: string) => d ? d.split('T')[0].trim() : '';
+            const dayBookings = bookings.filter(b => normalizeDate(b.date) === calendarDate && b.status !== 'Odwołana');
+            const pendingDayBookings = dayBookings.filter(b => b.status === 'Oczekująca');
+            const confirmedDaySlots = timeSlots.filter(slot => isBookingConfirmedForSlot(bookings, calendarDate, slot));
+            const allPendingBookings = bookings.filter(b => b.status === 'Oczekująca');
+
+            return (
+              <div className="space-y-6">
+                
+                {/* Date Navigator Header Card */}
+                <div className="p-5 sm:p-6 rounded-2xl bg-gradient-to-br from-slate-950 via-slate-900 to-amber-950/20 border border-slate-800 shadow-xl space-y-4">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                      <div className="text-[11px] font-mono uppercase tracking-wider text-amber-400 font-bold flex items-center gap-1.5">
+                        <CalendarDays className="w-3.5 h-3.5" />
+                        <span>Harmonogram stanowiska ekspresowego</span>
+                      </div>
+                      <h4 className="text-xl sm:text-2xl font-black font-heading text-white tracking-tight capitalize mt-0.5">
+                        {formatCalendarHeaderDate(calendarDate)}
+                      </h4>
+                      <p className="text-xs text-slate-400 mt-1">
+                        Zatwierdzenie rezerwacji lub zablokowanie godziny natychmiast blokuje ten termin na stronie głównej (klient widzi wyszarzony przycisk).
+                      </p>
+                    </div>
+
+                    {/* Date Controls */}
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={goToPrevDay}
+                        className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 hover:text-white transition-colors cursor-pointer"
+                        title="Poprzedni dzień"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </button>
+
+                      <input
+                        type="date"
+                        value={calendarDate}
+                        onChange={(e) => e.target.value && setCalendarDate(e.target.value)}
+                        className="px-3 py-2 bg-slate-900 border border-slate-700 focus:border-amber-400 rounded-xl text-xs text-white font-mono cursor-pointer outline-none"
+                      />
+
+                      <button
+                        type="button"
+                        onClick={goToToday}
+                        className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-amber-400 text-xs font-bold transition-colors cursor-pointer"
+                      >
+                        Dzisiaj
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={goToNextDay}
+                        className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 hover:text-white transition-colors cursor-pointer"
+                        title="Następny dzień"
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Daily Availability Metric Pills */}
+                  <div className="flex flex-wrap items-center gap-2.5 pt-3 border-t border-slate-800/80 text-xs">
+                    <span className="px-3 py-1.5 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-bold flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                      <span>Wolne godziny na www: {21 - confirmedDaySlots.length} / 21</span>
+                    </span>
+
+                    <span className="px-3 py-1.5 rounded-lg bg-red-500/15 border border-red-500/30 text-red-300 font-bold flex items-center gap-1.5">
+                      <Lock className="w-3.5 h-3.5 text-red-400" />
+                      <span>Potwierdzone / Zablokowane na www: {confirmedDaySlots.length}</span>
+                    </span>
+
+                    {pendingDayBookings.length > 0 && (
+                      <span className="px-3 py-1.5 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-300 font-bold flex items-center gap-1.5 animate-pulse">
+                        <Clock className="w-3.5 h-3.5 text-amber-400" />
+                        <span>Czeka na potwierdzenie: {pendingDayBookings.length}</span>
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Sekcja oczekujących zgłoszeń wymagających potwierdzenia */}
+                {allPendingBookings.length > 0 && (
+                  <div className="p-5 rounded-2xl bg-amber-950/20 border border-amber-500/40 space-y-3.5 shadow-lg">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-lg bg-amber-400 text-black flex items-center justify-center font-black text-xs">
+                          !
+                        </div>
+                        <div>
+                          <h4 className="font-heading text-sm font-bold text-white uppercase tracking-tight">
+                            Zgłoszenia oczekujące na Twoje potwierdzenie ({allPendingBookings.length})
+                          </h4>
+                          <p className="text-[11px] text-slate-400">
+                            Kliknij „Potwierdź rezerwację”, aby natychmiast zablokować daną godzinę na stronie (będzie nieklikalna dla innych klientów).
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {allPendingBookings.map((b) => (
+                        <div
+                          key={b.id}
+                          className="p-4 rounded-xl bg-slate-900 border border-amber-500/30 flex flex-col justify-between gap-3 shadow-md"
+                        >
+                          <div>
+                            <div className="flex items-start justify-between gap-2">
+                              <div>
+                                <span className="font-bold text-white text-sm block">{b.clientName}</span>
+                                <span className="text-xs text-slate-400 font-mono">{b.phone}</span>
+                              </div>
+                              <div className="text-right">
+                                <span className="px-2 py-0.5 rounded bg-amber-400/20 border border-amber-400/40 text-amber-300 text-xs font-mono font-bold block">
+                                  {b.date} · {b.timeSlot}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="mt-2.5 pt-2 border-t border-slate-800 text-xs space-y-1">
+                              <div className="text-slate-300">
+                                Pojazd: <strong className="text-white">{b.vehicleMake} {b.vehicleModel}</strong> ({b.registrationPlate})
+                              </div>
+                              <div className="text-slate-400 text-[11px]">
+                                Usługa: {b.selectedOilBrand} · {b.oilProductName || 'Olej silnikowy'}
+                              </div>
+                              {b.notes && (
+                                <div className="text-slate-400 text-[11px] italic">
+                                  Uwagi: "{b.notes}"
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2 pt-2 border-t border-slate-800">
+                            <button
+                              type="button"
+                              onClick={() => handleConfirmBooking(b.id)}
+                              className="flex-1 py-2 px-3 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-md shadow-emerald-500/20 transition-all cursor-pointer"
+                            >
+                              <Check className="w-3.5 h-3.5" />
+                              <span>Potwierdź i zablokuj na www</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => handleStatusChange(b.id, 'Odwołana')}
+                              className="py-2 px-3 rounded-lg bg-slate-800 hover:bg-red-500/20 hover:text-red-400 text-slate-400 text-xs font-semibold transition-colors cursor-pointer"
+                            >
+                              Odrzuć
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 21-godzinowy harmonogram slotów stanowiska */}
+                <div className="p-5 sm:p-6 rounded-2xl bg-slate-950 border border-slate-800 space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-800">
+                    <div>
+                      <h4 className="font-heading text-sm font-bold uppercase tracking-wider text-white flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-amber-400" />
+                        <span>Harmonogram godzin stanowiska: {calendarDate}</span>
+                      </h4>
+                      <p className="text-[11px] text-slate-400 mt-0.5">
+                        Interwał 30 minut (wymiana do 27 min). Potwierdzone terminy są szare i nieaktywne na stronie głównej.
+                      </p>
+                    </div>
+
+                    <div className="text-xs text-slate-400 flex items-center gap-3">
+                      <span className="flex items-center gap-1">
+                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" />
+                        <span>Wolny</span>
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <span className="w-2.5 h-2.5 rounded-full bg-red-500 inline-block" />
+                        <span>Potwierdzony (Zablokowany na www)</span>
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Grid 21 slotów */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {timeSlots.map((slot) => {
+                      const matchedBooking = dayBookings.find(b => b.timeSlot === slot);
+                      const isConfirmed = matchedBooking && (matchedBooking.status === 'Potwierdzona' || matchedBooking.status === 'Zrealizowana');
+                      const isPending = matchedBooking && matchedBooking.status === 'Oczekująca';
+                      const isFree = !matchedBooking || matchedBooking.status === 'Odwołana';
+
+                      return (
+                        <div
+                          key={slot}
+                          className={`p-3.5 rounded-xl border transition-all ${
+                            isConfirmed
+                              ? 'bg-red-950/15 border-red-500/40 shadow-sm'
+                              : isPending
+                              ? 'bg-amber-950/20 border-amber-500/40 shadow-sm'
+                              : 'bg-slate-900/40 border-slate-800/80 hover:border-slate-700'
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex items-center gap-2.5">
+                              <div className={`px-2.5 py-1 rounded-lg font-mono font-black text-xs ${
+                                isConfirmed
+                                  ? 'bg-red-500 text-white'
+                                  : isPending
+                                  ? 'bg-amber-400 text-black'
+                                  : 'bg-slate-800 text-slate-300'
+                              }`}>
+                                {slot}
+                              </div>
+
+                              <div>
+                                {isConfirmed ? (
+                                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/20 text-red-300 border border-red-500/30 flex items-center gap-1">
+                                    <Lock className="w-3 h-3" />
+                                    <span>ZABLOKOWANE NA STRONIE</span>
+                                  </span>
+                                ) : isPending ? (
+                                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1">
+                                    <Clock className="w-3 h-3" />
+                                    <span>CZEKA NA POTWIERDZENIE</span>
+                                  </span>
+                                ) : (
+                                  <span className="text-[11px] font-semibold text-emerald-400 flex items-center gap-1">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                                    <span>Wolny termin (dostępny na www)</span>
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Akcja dla wolnego terminu: przycisk ręcznego zablokowania */}
+                            {isFree && (
+                              <button
+                                type="button"
+                                onClick={() => setManualBlockSlot(manualBlockSlot === slot ? null : slot)}
+                                className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white text-[11px] font-semibold flex items-center gap-1 transition-colors cursor-pointer"
+                              >
+                                <Plus className="w-3 h-3 text-amber-400" />
+                                <span>Zablokuj</span>
+                              </button>
+                            )}
+                          </div>
+
+                          {/* Dane rezerwacji jeśli potwierdzona */}
+                          {isConfirmed && matchedBooking && (
+                            <div className="mt-3 pt-2 border-t border-red-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                              <div>
+                                <div className="font-bold text-white flex items-center gap-1.5">
+                                  <span>{matchedBooking.clientName}</span>
+                                  <span className="text-slate-400 font-mono text-[11px]">({matchedBooking.phone})</span>
+                                </div>
+                                <div className="text-slate-300 text-[11px] mt-0.5">
+                                  Pojazd: <strong className="text-amber-300">{matchedBooking.registrationPlate}</strong> ({matchedBooking.vehicleMake} {matchedBooking.vehicleModel})
+                                </div>
+                              </div>
+
+                              <button
+                                type="button"
+                                onClick={() => handleStatusChange(matchedBooking.id, 'Odwołana')}
+                                className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-red-500/20 hover:text-red-300 border border-slate-700 text-slate-400 text-[11px] font-semibold flex items-center gap-1 transition-colors cursor-pointer shrink-0"
+                                title="Odblokuj tę godzinę, aby klienci mogli ją znowu rezerwować"
+                              >
+                                <Unlock className="w-3 h-3" />
+                                <span>Zwolnij termin</span>
+                              </button>
+                            </div>
+                          )}
+
+                          {/* Dane zgłoszenia jeśli oczekujące */}
+                          {isPending && matchedBooking && (
+                            <div className="mt-3 pt-2 border-t border-amber-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                              <div>
+                                <div className="font-bold text-white">
+                                  {matchedBooking.clientName} ({matchedBooking.phone})
+                                </div>
+                                <div className="text-slate-300 text-[11px]">
+                                  Pojazd: {matchedBooking.vehicleMake} {matchedBooking.vehicleModel} ({matchedBooking.registrationPlate})
+                                </div>
+                              </div>
+
+                              <div className="flex items-center gap-1.5 shrink-0">
+                                <button
+                                  type="button"
+                                  onClick={() => handleConfirmBooking(matchedBooking.id)}
+                                  className="px-2.5 py-1 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-[11px] flex items-center gap-1 transition-colors cursor-pointer"
+                                >
+                                  <Check className="w-3 h-3" />
+                                  <span>Potwierdź (zablokuj)</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleStatusChange(matchedBooking.id, 'Odwołana')}
+                                  className="px-2 py-1 rounded-lg bg-slate-900 text-slate-400 hover:text-red-400 text-[11px] transition-colors cursor-pointer"
+                                >
+                                  Odrzuć
+                                </button>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Formularz szybkiego ręcznego zablokowania slotu */}
+                          {isFree && manualBlockSlot === slot && (
+                            <div className="mt-3 pt-2.5 border-t border-slate-800 space-y-2 animate-fadeIn">
+                              <div className="text-[11px] font-bold text-amber-400 uppercase tracking-wider">
+                                Ręczna blokada godziny {slot} ({calendarDate}):
+                              </div>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                <input
+                                  type="text"
+                                  placeholder="Imię klienta lub powód (np. Klient z telefonu, Przerwa)"
+                                  value={manualClientName}
+                                  onChange={(e) => setManualClientName(e.target.value)}
+                                  className="px-2.5 py-1.5 bg-slate-950 border border-slate-700 rounded-lg text-xs text-white"
+                                />
+                                <input
+                                  type="text"
+                                  placeholder="Nr rejestracyjny pojazdu (np. SW 12345)"
+                                  value={manualPlate}
+                                  onChange={(e) => setManualPlate(e.target.value.toUpperCase())}
+                                  className="px-2.5 py-1.5 bg-slate-950 border border-slate-700 rounded-lg text-xs font-mono uppercase text-white"
+                                />
+                              </div>
+                              <div className="flex items-center gap-2 pt-1">
+                                <button
+                                  type="button"
+                                  onClick={() => handleCreateManualBlock(slot)}
+                                  className="px-3 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-black font-bold text-xs uppercase tracking-wider flex items-center gap-1 cursor-pointer"
+                                >
+                                  <Check className="w-3.5 h-3.5" />
+                                  <span>Zatwierdź i zablokuj na www</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setManualBlockSlot(null)}
+                                  className="px-3 py-1.5 text-xs text-slate-400 hover:text-white"
+                                >
+                                  Anuluj
+                                </button>
+                              </div>
+                            </div>
+                          )}
+
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+              </div>
+            );
+          })()}
+
           {/* TAB 1: PRICING */}
           {activeTab === 'prices' && (
             <div className="space-y-6">
@@ -657,21 +1150,35 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                             {b.totalBrutto.toFixed(2)} zł
                           </td>
                           <td className="py-3 px-4">
-                            <select
-                              value={b.status}
-                              onChange={(e) => handleStatusChange(b.id, e.target.value as AppointmentBooking['status'])}
-                              className={`text-[11px] font-bold rounded px-2 py-1 border ${
-                                b.status === 'Potwierdzona' ? 'bg-emerald-950 text-emerald-300 border-emerald-800' :
-                                b.status === 'Zrealizowana' ? 'bg-blue-950 text-blue-300 border-blue-800' :
-                                b.status === 'Odwołana' ? 'bg-rose-950 text-rose-300 border-rose-800' :
-                                'bg-amber-950 text-amber-300 border-amber-800'
-                              }`}
-                            >
-                              <option value="Oczekująca">Oczekująca</option>
-                              <option value="Potwierdzona">Potwierdzona</option>
-                              <option value="Zrealizowana">Zrealizowana</option>
-                              <option value="Odwołana">Odwołana</option>
-                            </select>
+                            <div className="flex items-center gap-1.5">
+                              <select
+                                value={b.status}
+                                onChange={(e) => handleStatusChange(b.id, e.target.value as AppointmentBooking['status'])}
+                                className={`text-[11px] font-bold rounded px-2 py-1 border ${
+                                  b.status === 'Potwierdzona' ? 'bg-emerald-950 text-emerald-300 border-emerald-800' :
+                                  b.status === 'Zrealizowana' ? 'bg-blue-950 text-blue-300 border-blue-800' :
+                                  b.status === 'Odwołana' ? 'bg-rose-950 text-rose-300 border-rose-800' :
+                                  'bg-amber-950 text-amber-300 border-amber-800'
+                                }`}
+                              >
+                                <option value="Oczekująca">Oczekująca</option>
+                                <option value="Potwierdzona">Potwierdzona</option>
+                                <option value="Zrealizowana">Zrealizowana</option>
+                                <option value="Odwołana">Odwołana</option>
+                              </select>
+
+                              {b.status === 'Oczekująca' && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleConfirmBooking(b.id)}
+                                  title="Potwierdź rezerwację (zablokuj godzinę na stronie)"
+                                  className="px-2 py-1 rounded bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-[10px] uppercase tracking-wider flex items-center gap-1 cursor-pointer shrink-0"
+                                >
+                                  <Check className="w-3 h-3" />
+                                  <span>Potwierdź</span>
+                                </button>
+                              )}
+                            </div>
                           </td>
                         </tr>
                       ))

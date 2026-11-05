@@ -16,7 +16,7 @@ import {
   Download,
   AlertCircle
 } from 'lucide-react';
-import { AppointmentBooking, ServicePrices, calculateQuotation, saveAdminStore, getAdminStore } from '../data/adminStore';
+import { AppointmentBooking, ServicePrices, calculateQuotation, saveAdminStore, getAdminStore, isBookingConfirmedForSlot } from '../data/adminStore';
 import { EngineOption, OilProductMatch } from '../data/vehicleDatabase';
 import { sendAutomatedEmail } from '../services/emailService';
 
@@ -38,6 +38,7 @@ interface BookingModalProps {
     quotation: ReturnType<typeof calculateQuotation>;
   } | null;
   prices: ServicePrices;
+  bookings?: AppointmentBooking[];
   onBookingSuccess: (booking: AppointmentBooking) => void;
 }
 
@@ -46,9 +47,11 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   onClose,
   initialConfig,
   prices,
+  bookings,
   onBookingSuccess
 }) => {
   if (!isOpen) return null;
+  const effectiveBookings = bookings ?? getAdminStore().bookings;
 
   // Selected date & timeslot
   const [selectedDate, setSelectedDate] = useState<string>(() => {
@@ -421,20 +424,34 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                   2. Wybierz godzinę (interwał 30 min / wymiana do 27 min*):
                 </label>
                 <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
-                  {timeSlots.map((time) => (
-                    <button
-                      type="button"
-                      key={time}
-                      onClick={() => setSelectedTime(time)}
-                      className={`py-2 px-2 rounded-lg text-xs font-bold tabular-nums transition-all cursor-pointer ${
-                        selectedTime === time
-                          ? 'bg-amber-400 text-black shadow-sm ring-2 ring-amber-400/40'
-                          : 'bg-slate-950 text-slate-300 border border-slate-800 hover:border-slate-700'
-                      }`}
-                    >
-                      {time}
-                    </button>
-                  ))}
+                  {timeSlots.map((time) => {
+                    const isOccupied = isBookingConfirmedForSlot(effectiveBookings, selectedDate, time);
+                    const isSelected = selectedTime === time;
+
+                    return (
+                      <button
+                        type="button"
+                        key={time}
+                        disabled={isOccupied}
+                        onClick={() => !isOccupied && setSelectedTime(time)}
+                        title={isOccupied ? `Godzina ${time} jest zarezerwowana (termin potwierdzony)` : undefined}
+                        className={`py-2 px-2 rounded-lg text-xs font-bold tabular-nums transition-all ${
+                          isOccupied
+                            ? 'bg-slate-900/40 text-slate-600 border border-slate-800/50 cursor-not-allowed opacity-50 line-through select-none'
+                            : isSelected
+                            ? 'bg-amber-400 text-black shadow-sm ring-2 ring-amber-400/40 cursor-pointer font-black'
+                            : 'bg-slate-950 text-slate-300 border border-slate-800 hover:border-slate-700 cursor-pointer'
+                        }`}
+                      >
+                        <span>{time}</span>
+                        {isOccupied && (
+                          <span className="block text-[8px] font-sans font-normal text-rose-500/80 no-underline leading-none mt-0.5">
+                            zajęte
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 

@@ -22,11 +22,19 @@ import {
   PackageCheck
 } from 'lucide-react';
 import { EngineOption, OilProductMatch } from '../data/vehicleDatabase';
-import { ServicePrices, calculateQuotation, getAdminStore, saveAdminStore, AppointmentBooking } from '../data/adminStore';
+import { 
+  ServicePrices, 
+  calculateQuotation, 
+  getAdminStore, 
+  saveAdminStore, 
+  AppointmentBooking,
+  isBookingConfirmedForSlot
+} from '../data/adminStore';
 import { sendAutomatedEmail, triggerFormSubmitActivation } from '../services/emailService';
 
 interface ConfiguratorSectionProps {
   prices: ServicePrices;
+  bookings?: AppointmentBooking[];
   onProceedToBooking?: (config: {
     vehicleMake: string;
     vehicleModel: string;
@@ -42,7 +50,8 @@ interface ConfiguratorSectionProps {
   }) => void;
 }
 
-export const ConfiguratorSection: React.FC<ConfiguratorSectionProps> = ({ prices, onProceedToBooking }) => {
+export const ConfiguratorSection: React.FC<ConfiguratorSectionProps> = ({ prices, bookings, onProceedToBooking }) => {
+  const effectiveBookings = bookings ?? getAdminStore().bookings;
   // KROK 1: Obowiązkowe pola formularza
   const [vehicleMake, setVehicleMake] = useState<string>('Volkswagen');
   const [vehicleModel, setVehicleModel] = useState<string>('Golf VII');
@@ -169,7 +178,13 @@ export const ConfiguratorSection: React.FC<ConfiguratorSectionProps> = ({ prices
       updatePreferredDate('', selectedTimeSlot);
     } else {
       setSelectedDateIso(day.iso);
-      updatePreferredDate(day.iso, selectedTimeSlot);
+      // Jeśli obecna godzina jest zajęta w wybranym nowym dniu, czyścimy wybór godziny
+      const isOccupiedOnNewDay = isBookingConfirmedForSlot(effectiveBookings, day.iso, selectedTimeSlot);
+      const effectiveTime = isOccupiedOnNewDay ? '' : selectedTimeSlot;
+      if (isOccupiedOnNewDay) {
+        setSelectedTimeSlot('');
+      }
+      updatePreferredDate(day.iso, effectiveTime);
     }
   };
 
@@ -179,17 +194,31 @@ export const ConfiguratorSection: React.FC<ConfiguratorSectionProps> = ({ prices
       updatePreferredDate('', selectedTimeSlot);
     } else {
       setSelectedDateIso('custom');
-      updatePreferredDate('custom', selectedTimeSlot, customDateValue);
+      const isOccupiedOnNewDay = isBookingConfirmedForSlot(effectiveBookings, customDateValue, selectedTimeSlot);
+      const effectiveTime = isOccupiedOnNewDay ? '' : selectedTimeSlot;
+      if (isOccupiedOnNewDay) {
+        setSelectedTimeSlot('');
+      }
+      updatePreferredDate('custom', effectiveTime, customDateValue);
     }
   };
 
   const handleCustomDateChange = (val: string) => {
     setCustomDateValue(val);
     setSelectedDateIso('custom');
-    updatePreferredDate('custom', selectedTimeSlot, val);
+    const isOccupiedOnNewDay = isBookingConfirmedForSlot(effectiveBookings, val, selectedTimeSlot);
+    const effectiveTime = isOccupiedOnNewDay ? '' : selectedTimeSlot;
+    if (isOccupiedOnNewDay) {
+      setSelectedTimeSlot('');
+    }
+    updatePreferredDate('custom', effectiveTime, val);
   };
 
   const handleSelectTime = (slot: string) => {
+    const targetDate = selectedDateIso === 'custom' ? customDateValue : (selectedDateIso || todayIso);
+    if (isBookingConfirmedForSlot(effectiveBookings, targetDate, slot)) {
+      return; // Nie pozwól wybrać zablokowanego slotu
+    }
     const newSlot = selectedTimeSlot === slot ? '' : slot;
     setSelectedTimeSlot(newSlot);
     updatePreferredDate(selectedDateIso, newSlot, customDateValue);
@@ -257,8 +286,8 @@ export const ConfiguratorSection: React.FC<ConfiguratorSectionProps> = ({ prices
       id: `inq-${Date.now()}`,
       referenceNumber: refNum,
       createdAt: new Date().toISOString().replace('T', ' ').substring(0, 16),
-      date: preferredDate || 'Do ustalenia w ofercie',
-      timeSlot: 'Do ustalenia',
+      date: selectedDateIso === 'custom' ? (customDateValue || todayIso) : (selectedDateIso || todayIso),
+      timeSlot: selectedTimeSlot || 'Do ustalenia',
       clientName: clientName.trim(),
       phone: phone.trim(),
       email: email.trim(),
@@ -1311,18 +1340,34 @@ export const ConfiguratorSection: React.FC<ConfiguratorSectionProps> = ({ prices
                       <div className="grid grid-cols-4 sm:grid-cols-7 gap-1.5 sm:gap-2 select-none">
                         {timeSlots.map((slot) => {
                           const isSelected = selectedTimeSlot === slot;
+                          const targetDate = selectedDateIso === 'custom' ? customDateValue : (selectedDateIso || todayIso);
+                          const isConfirmed = isBookingConfirmedForSlot(effectiveBookings, targetDate, slot);
+
                           return (
                             <button
                               type="button"
                               key={slot}
-                              onClick={() => handleSelectTime(slot)}
-                              className={`py-2 px-1 text-center rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
-                                isSelected
-                                  ? 'bg-amber-400 text-black shadow-md ring-2 ring-amber-400/40 font-black scale-[1.02]'
-                                  : 'bg-slate-950 text-slate-300 border border-slate-800 hover:border-slate-700 hover:text-white'
+                              disabled={isConfirmed}
+                              onClick={() => !isConfirmed && handleSelectTime(slot)}
+                              title={
+                                isConfirmed
+                                  ? `Godzina ${slot} jest zarezerwowana (termin potwierdzony w warsztacie)`
+                                  : `Wybierz godzinę ${slot}`
+                              }
+                              className={`py-2 px-1 text-center rounded-lg text-xs font-mono font-bold transition-all ${
+                                isConfirmed
+                                  ? 'bg-slate-900/40 text-slate-600 border border-slate-800/50 cursor-not-allowed opacity-50 line-through select-none'
+                                  : isSelected
+                                  ? 'bg-amber-400 text-black shadow-md ring-2 ring-amber-400/40 font-black scale-[1.02] cursor-pointer'
+                                  : 'bg-slate-950 text-slate-300 border border-slate-800 hover:border-slate-700 hover:text-white cursor-pointer'
                               }`}
                             >
-                              {slot}
+                              <span>{slot}</span>
+                              {isConfirmed && (
+                                <span className="block text-[8px] font-sans font-normal text-rose-500/80 no-underline leading-none mt-0.5">
+                                  zajęte
+                                </span>
+                              )}
                             </button>
                           );
                         })}
