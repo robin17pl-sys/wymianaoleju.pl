@@ -50,7 +50,17 @@ export const Navbar: React.FC<NavbarProps> = ({ settings, onOpenBooking, onOpenA
           </a>
 
           {/* Zone 2: 4-5 concise single-line nav links */}
-          <nav className="hidden lg:flex items-center gap-7 text-sm font-medium text-slate-300">
+          <nav className="hidden lg:flex items-center gap-5 xl:gap-7 text-sm font-medium text-slate-300">
+            <a
+              href="#"
+              onClick={(e) => {
+                e.preventDefault();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              className="hover:text-amber-400 font-semibold transition-colors whitespace-nowrap shrink-0"
+            >
+              HOME
+            </a>
             <a href="#konfigurator" className="hover:text-amber-400 transition-colors whitespace-nowrap shrink-0">
               Dobór oleju i wycena
             </a>
@@ -83,8 +93,7 @@ export const Navbar: React.FC<NavbarProps> = ({ settings, onOpenBooking, onOpenA
               onClick={onOpenBooking}
               className="px-3 sm:px-5 py-2 sm:py-2.5 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-black bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 rounded-lg shadow-lg shadow-amber-500/20 transition-all hover:scale-[1.02] active:scale-[0.98] whitespace-nowrap shrink-0 cursor-pointer"
             >
-              <span className="sm:hidden">Umów wizytę</span>
-              <span className="hidden sm:inline">Umów wizytę do 27 min</span>
+              <span>Umów wizytę</span>
             </button>
 
             {/* Mobile menu button */}
@@ -102,6 +111,17 @@ export const Navbar: React.FC<NavbarProps> = ({ settings, onOpenBooking, onOpenA
       {/* Mobile nav dropdown */}
       {mobileMenuOpen && (
         <div className="lg:hidden border-b border-slate-800 bg-[#0f141c] px-4 pt-3 pb-6 space-y-3">
+          <a
+            href="#"
+            onClick={(e) => {
+              e.preventDefault();
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+              setMobileMenuOpen(false);
+            }}
+            className="block py-2 text-base font-semibold text-amber-400 hover:text-amber-300"
+          >
+            HOME
+          </a>
           <a
             href="#konfigurator"
             onClick={() => setMobileMenuOpen(false)}

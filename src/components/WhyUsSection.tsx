@@ -1,5 +1,4 @@
-import React from 'react';
-import { Target, Clock, ShieldCheck, Cpu, DollarSign, Recycle, CheckCircle } from 'lucide-react';
+import { Target, Clock, ShieldCheck, Cpu, Recycle } from 'lucide-react';
 
 export const WhyUsSection: React.FC = () => {
   const advantages = [
@@ -17,7 +16,7 @@ export const WhyUsSection: React.FC = () => {
     },
     {
       icon: ShieldCheck,
-      title: 'Tylko 3 elitarne marki olejowe',
+      title: 'Topowe marki oleju',
       description: 'Żadnych tanich zamienników marketowych ani nieznanych rozlewni. Stosujemy wyłącznie certyfikowane produkty marek MOTUL, LIQUI MOLY i VALVOLINE bezpośrednio z oficjalnych kanałów dystrybucji.',
       highlight: 'Motul · Liqui Moly · Valvoline'
     },
@@ -87,11 +86,6 @@ export const WhyUsSection: React.FC = () => {
                   <p className="text-slate-400 text-sm leading-relaxed">
                     {adv.description}
                   </p>
-                </div>
-
-                <div className="mt-6 pt-4 border-t border-slate-800/60 flex items-center gap-2 text-xs text-slate-500">
-                  <CheckCircle className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                  <span>Standard jakości ZMIANAOLEJU.pl Express</span>
                 </div>
               </div>
             );

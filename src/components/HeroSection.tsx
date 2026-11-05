@@ -170,6 +170,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ settings, onScrollToCo
               <div>
                 <div className="font-heading font-black text-2xl text-white tabular-nums">do 27 min*</div>
                 <div className="text-xs text-slate-400 mt-0.5">Ekspresowa wymiana na poczekaniu</div>
+                <div className="text-[11px] text-amber-400/80 mt-1 leading-tight">*bez płukania silnika i dodatku Metal Guard</div>
               </div>
             </div>
           </div>
@@ -180,7 +181,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ settings, onScrollToCo
                 <Award className="w-5 h-5" />
               </div>
               <div>
-                <div className="font-heading font-black text-2xl text-white">Tylko 3 marki</div>
+                <div className="font-heading font-black text-2xl text-white">Topowe Marki OLEJU</div>
                 <div className="text-xs text-slate-400 mt-0.5">Motul · Liqui Moly · Valvoline</div>
               </div>
             </div>

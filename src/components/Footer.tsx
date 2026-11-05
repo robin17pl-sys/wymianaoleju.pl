@@ -94,7 +94,7 @@ export const Footer: React.FC<FooterProps> = ({ settings, onOpenAdmin }) => {
           {/* Certyfikowane marki */}
           <div>
             <div className="text-xs font-bold uppercase tracking-wider text-slate-200 mb-3">
-              Tylko 3 Marki
+              Topowe Marki OLEJU
             </div>
             <ul className="space-y-2">
               <li className="text-slate-300">
